@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>fonts/AlibabaPuHuiTi-2-55-Regular.ttf</file>
+        <file>fonts/CN-Bold.ttf</file>
+        <file>fonts/fontawesome-webfont.ttf</file>
+    </qresource>
+</RCC>
