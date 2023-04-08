@@ -79,7 +79,22 @@ void OpenChatModel::sendMessage(const QString &msg, const QString &modelName) {
 Q_INVOKABLE void OpenChatModel::addMessage(const QString &msg,
                                            const QString &roleName,
                                            const QString &modelName) {
+    if (roleName == "system") {
+        if (chatData.size() > 0) {
+            beginResetModel();
+            chatData[0] = QVariantMap{
+                {"chatMessage", msg},
+                {"chatRole", roleName},
+                {"chatID", ""},
+                {"chatModel", modelName},
 
+            };
+            endResetModel();
+            qDebug() << "book changed " << msg;
+            //            beginResetModel();
+            return;
+        }
+    }
     beginInsertRows(QModelIndex(), chatData.size(), chatData.size());
     chatData.append(QVariantMap{
         {"chatMessage", msg},
