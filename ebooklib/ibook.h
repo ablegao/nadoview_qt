@@ -44,8 +44,17 @@ public:
     virtual QString prevPage() = 0;
     Q_INVOKABLE virtual QByteArray openFileByUrl(const QString &url) = 0;
 
+    // 当前阅读的所在页索引
+    //    Q_PROPERTY(
+    //        int readIndex READ readIndex WRITE setReadIndex NOTIFY
+    //        readIndexChanged)
+
+    virtual int readIndex() = 0;
+    //    virtual void setReadIndex(int index) = 0;
+
     //    virtual int Save();
-    // signals:
+signals:
+    void readIndexChanged();
     //     virtual void parseMenuCompleted(QVector<QJsonObject>) = 0;
     //     virtual void parseMenuError(QString) = 0;
 };

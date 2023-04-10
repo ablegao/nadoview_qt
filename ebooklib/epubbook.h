@@ -60,6 +60,8 @@ public:
     //    Q_INVOKABLE void currentPageInfo(const QString &url, const QString
     //    &rowid,
     //                                     const QString &rowText);
+    int readIndex() override;
+    //    void setReadIndex(int index) override;
 
 private:
     // 解析 epub 中的 "META-INF/container.xml" 获得
@@ -69,7 +71,7 @@ private:
     QString parseContainer();
     void parseTocNcx();
     void parseNavXHtml();
-
+    int mSpineIndex = -1;
     // 解析整个epub文件
     int parseEpub();
     QuaZip *m_epub = nullptr;
@@ -85,7 +87,6 @@ private:
     // content.opf 中的 spine 字段下的所有元素
     // 这个字段应该是本书的正常阅读顺序
     QVector<QJsonObject> m_Spine;
-    int mSpineIndex = -1;
 };
 
 #endif // EPUBBOOK_H

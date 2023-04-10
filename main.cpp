@@ -9,6 +9,7 @@
 #include "mybookimageschemehandler.h"
 #include "openchatmodel.h"
 #include "tableofcontent.h"
+#include "userdata.h"
 #include <QLocale>
 #include <QTranslator>
 
@@ -51,6 +52,7 @@ int main(int argc, char *argv[]) {
 
     //    qmlRegisterType<TableOfContent>("NadoView", 1, 0,
     //    "TableOfContentModel");
+    qmlRegisterType<UserData>("NadoView", 1, 0, "UserData");
 
     // open chat model 注册
     qmlRegisterType<OpenChatModel>("NadoView", 1, 0, "OpenChatModel");

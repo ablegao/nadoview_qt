@@ -132,13 +132,18 @@ Q_INVOKABLE QString TableOfContent::markdownToHtml(const QString &markdown,
     return blockHtml;
 }
 
-Q_INVOKABLE bool TableOfContent::useMarkDown() {
+bool TableOfContent::useMarkDown() {
     if (mBook == nullptr)
         return false;
     if (mBook->language.contains("zh"))
         return false;
     return true;
 }
+
+QString TableOfContent::indexToUrl(int index) {
+    return mBook->indexToUrl(index);
+}
+int TableOfContent::readIndex() { return mBook->readIndex(); }
 
 // void TableOfContent::requestStarted(QWebEngineUrlRequestJob *request) {
 //     qDebug() << "Request started for URL:" << request;

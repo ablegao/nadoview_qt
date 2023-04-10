@@ -35,6 +35,8 @@ public:
 
     Q_INVOKABLE QString markdownToHtml(const QString &fulltext, int fontsize,
                                        int w, int h);
+    Q_INVOKABLE QString indexToUrl(int index);
+    Q_INVOKABLE int readIndex();
     Q_INVOKABLE bool useMarkDown();
     //    void requestStarted(QWebEngineUrlRequestJob *request) override;
 

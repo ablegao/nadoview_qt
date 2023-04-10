@@ -8,11 +8,17 @@ Window {
     width: 1400
     height: 800
     title: "Nado View"
+
     property string lang: "cn"
     property int screenWidthThreshold: 1600
     property int itemsPerPage: width >= screenWidthThreshold ? 2 : 1
     property string pageHref:"";
     property string pageDesc:"";
+    property  string bookName: ""
+    property int onstartScrollTo: 0
+    UserData{
+        id:userdata
+    }
 //    FontLoader {
 //            id: customFont
 //            source: "qrc:/fonts/AlibabaPuHuiTi-2-55-Regular.ttf" // 修改为自定义字体文件的相对路径
@@ -32,6 +38,7 @@ Window {
 
     function bookOpenFinishd(obj){
         root.title = "Currently using NadoView 0.1 to read《" + obj.name + "》";
+        root.bookName = obj.name;
         root.lang = obj.lang;
         var source = "image://mybook/"+obj.coverImg+"?180x240";
         console.log(obj.firstPageUrl);
@@ -43,16 +50,21 @@ Window {
         }
 
         tocListView.currentIndex = 0;
-        pageView.url = "mybook://book.local"+obj.firstPageUrl;
+        var read = userdata.openBook(obj.name);
+        console.log(JSON.stringify(read));
+        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
+        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
+        onstartScrollTo = read.last_read_scroll_number;
+//        console.log(JSON.stringify(out));
 //        tableOfContent.openChapter(0);
-        console.log("language ............",obj.lang,obj.firstPageUrl);
+//        console.log("language ............",obj.lang,obj.firstPageUrl);
     }
 
     property var pageRows:[];
     function bookChapterReaded(obj){
-        root.pageHref = obj.href;
-        pageView.loadHtml(obj.html,"mbook://book.local/");
-        root.pageDesc = obj.desc;
+//        root.pageHref = obj.href;
+//        pageView.loadHtml(obj.html,"mbook://book.local/");
+//        root.pageDesc = obj.desc;
 
     }
     Component.onCompleted: function(){
@@ -67,233 +79,16 @@ Window {
         id:mainSplitView
         orientation:Qt.Horizontal
         anchors.fill: parent
-        Rectangle{
-            implicitHeight: mainSplitView.orientation == Qt.Vertical? parent.height/2:parent.height
-            implicitWidth:mainSplitView.orientation == Qt.Vertical?parent.width:parent.width-chatBox.implicitWidth
-
-            SplitView {
-                id: splitView
-                anchors.fill: parent
-                orientation:Qt.Horizontal
-                Rectangle{
-                    id:leftBox
-                    SplitView.minimumWidth: 0
-                    SplitView.maximumWidth:  400
-                    implicitWidth: 0
-                    color:"#fffffe"
-                    Column{
-                        Rectangle{
-                            id:bookIconBox
-                            width:leftBox.width
-                            height:200 +20
-            //                border.width:1
-                            Image{
-                                id:bookIcon
-                                source:""
-                                anchors.margins: 10
-                                anchors.centerIn: parent
-                            }
-                        }
-                        ListView {
-                            id: tocListView
-                            anchors.margins: 10
-                            width:leftBox.width
-                            height:leftBox.height - bookIconBox.height
-                            model: tableOfContent
-                            delegate:  Item{
-                                width: tocListView.width
-                                height: textItem.implicitHeight
-                                Text {
-                                    id:textItem
-                                    text: chapterName
-                                    font.pixelSize: 16
-                                    padding: 8
-                                    width:parent.width
-                                    wrapMode:Text.Wrap
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: function(){
-
-                                        tocListView.currentIndex = index;
-                                        pageView.url = "mybook://book.local"+chapterUrl;
-
-                                    }
-                                }
-                            }
-                            highlight: Rectangle {
-                                color: "#bae8e8"
-                            }
-                            highlightMoveDuration:100
-                            focus: true
-                            clip:true
-
-                        }
-                    }
-                }
-                Rectangle{
-                    SplitView.minimumWidth: 300
-                    SplitView.maximumWidth:  parent.width
-                    id:centerBox
-                    color:"#fffffe"
-                    implicitWidth: (root.width-leftBox.width)/2
-
-
-                    WebEngineView {
-                            id:pageView
-
-                            height:parent.height - 35
-                            width: parent.width
-
-                            onLoadingChanged: function (loadRequest) {
-                                console.log(loadRequest.status);
-                                if (loadRequest.status ===2) {
-                                    console.log("page load success..");
-                                    runJavaScript(`var paragraphs = document.getElementsByTagName('p');
-                                                  for (var i = 0; i < paragraphs.length; i++)
-                                                  { paragraphs[i].style.textIndent = '2em'; }
-
-                                                  `);
-                                    runJavaScript(`var imgs = document.getElementsByTagName('img');
-                                                  for (var i = 0; i < imgs.length; i++)
-                                                  { imgs[i].style.maxWidth = '100%'; }
-
-                                                  `);
-                                    runJavaScript("document.documentElement.style.overflowX = 'hidden';");
-                                }
-                            }
-
-                    }
-
-                    Rectangle{
-                        color:"#bae8e8"
-                        id:webview_btns
-                        width:parent.width
-                        anchors.top: pageView.bottom
-                        height:35
-    //                    border.width: 1
-
-                        Row {
-                            id:tool_row
-                            anchors.centerIn: parent
-                            spacing: 5
-                            property int  cellHeight: 26
-                            Repeater {
-                                model: ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
-                                delegate: Rectangle {
-                                    id: colorBlock
-                                    width: parent.cellHeight
-                                    height: parent.cellHeight
-                                    color:  modelData
-                                    radius: 2
-                                    border.width:1
-    //                                function getColor  (index) {
-    //                                    console.log("index==== ",index);
-    //                                    var colors = ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
-    //                                    return colors[index]
-    //                                }
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            pageView.runJavaScript(`
-                                                            var selectedText = window.getSelection();
-                                                            var range = selectedText.getRangeAt(0);
-                                                            var span = document.createElement('span');
-                                                            span.style.backgroundColor ="`+modelData+`";
-                                                            range.surroundContents(span);
-                                                        `);
-    //                                        pageView.text
-    //                                        console.log("Clicked color:", colorBlock.color)
-    //                                        pageView.text= pageView.text.replace(pageView.selectedText,"<span color='"+colorBlock.color+"'>"+pageView.selectedText+"</span>")
-                                        }
-                                    }
-
-
-                                }
-                            }
-
-                            Text {
-                                id: open_menu
-                                width: parent.cellHeight
-                                height: parent.cellHeight
-    //                            radius: 2
-                                font.pixelSize: parent.cellHeight
-                                text:''
-
-    //                            border.width:1
-                                font.family: iconFont.name
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-
-                                        if(leftBox.implicitWidth==0) leftBox.implicitWidth=200;
-                                        else leftBox.implicitWidth=0;
-                                    }
-                                }
-                            }
-                            Text {
-
-                                width: parent.cellHeight
-                                height: parent.cellHeight
-    //                            radius: 2
-                                font.pixelSize: parent.cellHeight
-                                text:''
-
-    //                            border.width:1
-                                font.family: iconFont.name
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: function(){
-                                         // 上一页
-                                       var u = tableOfContent.prevPage();
-                                        if(u!=="") pageView.url = "mybook://book.local"+u;
-                                    }
-                                }
-                            }
-
-                            Text {
-                                width: parent.cellHeight
-                                height: parent.cellHeight
-    //                            radius: 2
-                                font.pixelSize: parent.cellHeight
-                                text:''
-
-    //                            border.width:1
-                                font.family: iconFont.name
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked:function() {
-
-                                       // 下一页
-                                        var u= tableOfContent.nextPage();
-                                        if(u!=="")
-                                        pageView.url = "mybook://book.local"+u;
-                                    }
-                                }
-                            }
-
-
-
-                        }
-
-
-                    }
-
-                }
-
-            }
-        }
-
 
         Rectangle{
                 color:"#fffffe"
                 id:chatBox
-                implicitWidth: mainSplitView.orientation == Qt.Vertical?parent.width:parent.width/2
+//                implicitHeight: mainSplitView.orientation == Qt.Vertical? parent.height/2:parent.height
+                implicitWidth:0
+
                 OpenChatModel {
                     id:runingChatModel
                 }
-
-
 
                 ListView{
 //                    spacing: 10
@@ -445,16 +240,260 @@ Window {
                     }
                 }
         }
+
+        Rectangle{
+
+            SplitView {
+                id: splitView
+                anchors.fill: parent
+                orientation:Qt.Horizontal
+                Rectangle{
+                    id:leftBox
+                    SplitView.minimumWidth: 0
+                    SplitView.maximumWidth:  400
+                    implicitWidth: 0
+                    color:"#fffffe"
+                    Column{
+                        Rectangle{
+                            id:bookIconBox
+                            width:leftBox.width
+                            height:200 +20
+                            visible: leftBox.implicitWidth>=200?true:false
+
+
+            //                border.width:1
+                            Image{
+                                id:bookIcon
+                                source:""
+                                anchors.margins: 10
+                                anchors.centerIn: parent
+                            }
+                        }
+                        ListView {
+                            id: tocListView
+                            anchors.margins: 10
+                            width:leftBox.width
+                            height:leftBox.height - bookIconBox.height
+                            model: tableOfContent
+                            delegate:  Item{
+                                width: tocListView.width
+                                height: textItem.implicitHeight
+                                Text {
+                                    id:textItem
+                                    text: chapterName
+                                    font.pixelSize: 16
+                                    padding: 8
+                                    width:parent.width
+                                    wrapMode:Text.Wrap
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: function(){
+
+                                        tocListView.currentIndex = index;
+                                        pageView.url = "mybook://book.local"+chapterUrl;
+
+                                    }
+                                }
+                            }
+                            highlight: Rectangle {
+                                color: "#bae8e8"
+                            }
+                            highlightMoveDuration:100
+                            focus: true
+                            clip:true
+
+                        }
+                    }
+                }
+                Rectangle{
+                    SplitView.minimumWidth: 300
+                    SplitView.maximumWidth:  parent.width
+                    id:centerBox
+                    color:"#fffffe"
+                    implicitWidth: (root.width-leftBox.width)/2
+
+
+                    WebEngineView {
+                            id:pageView
+
+                            height:parent.height - 35
+                            width: parent.width
+//                            property  int  scrollY: 0
+                            onLoadingChanged: function (loadRequest) {
+                                console.log(loadRequest.status);
+                                if (loadRequest.status ===2) {
+                                    console.log("page load success..");
+                                    runJavaScript(`var paragraphs = document.getElementsByTagName('p');
+                                                  for (var i = 0; i < paragraphs.length; i++)
+                                                  { paragraphs[i].style.textIndent = '2em'; }
+
+                                                  `);
+                                    runJavaScript(`var imgs = document.getElementsByTagName('img');
+                                                  for (var i = 0; i < imgs.length; i++)
+                                                  { imgs[i].style.maxWidth = '100%'; }
+
+                                                  `);
+                                    runJavaScript("document.documentElement.style.overflowX = 'hidden';");
+//                                    runJavaScript("document.documentElement.style.fontSize = '16px';");
+//                                    console.log("read index....",tableOfContent.readIndex());
+//                                    userdata.read(root.bookName,tableOfContent.readIndex(),0);
+//                                    pageView.scrollBy(0,root.onstartScrollTo);
+                                    console.log(root.onstartScrollTo,"scrollPos");
+                                    runJavaScript(`window.scrollTo(0,`+root.onstartScrollTo+`)`);
+
+                                }
+                            }
+
+                            onScrollPositionChanged:function(position){
+//                                console.log("position",position.y);
+//                                scrollY = position.y;
+                                selectionTimer.restart();
+                            }
+
+                    }
+
+                    Rectangle{
+                        color:"#bae8e8"
+                        id:webview_btns
+                        width:parent.width
+                        anchors.top: pageView.bottom
+                        height:35
+    //                    border.width: 1
+
+                        Row {
+                            id:tool_row
+                            anchors.centerIn: parent
+                            spacing: 5
+                            property int  cellHeight: 26
+                            Repeater {
+                                model: ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
+                                delegate: Rectangle {
+                                    id: colorBlock
+                                    width: parent.cellHeight
+                                    height: parent.cellHeight
+                                    color:  modelData
+                                    radius: 2
+                                    border.width:1
+    //                                function getColor  (index) {
+    //                                    console.log("index==== ",index);
+    //                                    var colors = ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
+    //                                    return colors[index]
+    //                                }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: {
+                                            pageView.runJavaScript(`
+                                                            var selectedText = window.getSelection();
+                                                            var range = selectedText.getRangeAt(0);
+                                                            var span = document.createElement('span');
+                                                            span.style.backgroundColor ="`+modelData+`";
+                                                            range.surroundContents(span);
+                                                        `);
+    //                                        pageView.text
+    //                                        console.log("Clicked color:", colorBlock.color)
+    //                                        pageView.text= pageView.text.replace(pageView.selectedText,"<span color='"+colorBlock.color+"'>"+pageView.selectedText+"</span>")
+                                        }
+                                    }
+
+
+                                }
+                            }
+
+                            Text {
+                                id: open_menu
+                                width: parent.cellHeight
+                                height: parent.cellHeight
+                                font.pixelSize: parent.cellHeight
+                                text:''
+                                font.family: iconFont.name
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+
+                                        if(leftBox.implicitWidth==0) leftBox.implicitWidth=200;
+                                        else leftBox.implicitWidth=0;
+                                    }
+                                }
+                            }
+                            Text {
+                                id: open_chat
+                                width: parent.cellHeight
+                                height: parent.cellHeight
+                                font.pixelSize: parent.cellHeight
+                                text:''
+                                font.family: iconFont.name
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+
+                                        if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
+                                        else chatBox.implicitWidth=0;
+                                    }
+                                }
+                            }
+                            Text {
+
+                                width: parent.cellHeight
+                                height: parent.cellHeight
+    //                            radius: 2
+                                font.pixelSize: parent.cellHeight
+                                text:''
+
+    //                            border.width:1
+                                font.family: iconFont.name
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: function(){
+                                         // 上一页
+                                       var u = tableOfContent.prevPage();
+                                        if(u!=="") pageView.url = "mybook://book.local"+u;
+                                    }
+                                }
+                            }
+
+                            Text {
+                                width: parent.cellHeight
+                                height: parent.cellHeight
+    //                            radius: 2
+                                font.pixelSize: parent.cellHeight
+                                text:''
+
+    //                            border.width:1
+                                font.family: iconFont.name
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked:function() {
+
+                                       // 下一页
+                                        var u= tableOfContent.nextPage();
+                                        if(u!=="")
+                                        pageView.url = "mybook://book.local"+u;
+                                    }
+                                }
+                            }
+
+
+
+                        }
+
+
+                    }
+
+                }
+
+            }
+        }
+
     }
 
     Timer {
             id: selectionTimer
-            interval: 1000 // 1 second delay
+            interval: 800 // 1 second delay
             running: false
             repeat: false
             onTriggered: {
-//                console.log("Selected text after delay:", myTextEdit.selectedText);
-//                floatingBox.open();
+                userdata.read(root.bookName,tableOfContent.readIndex(),pageView.scrollPosition.y);
             }
     }
 
