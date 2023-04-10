@@ -5,8 +5,8 @@ import QtWebEngine 1.10
 Window {
     id: root
     visible: true
-    width: 1400
-    height: 800
+    width: 760
+    height: 900
     title: "Nado View"
 
     property string lang: "cn"
@@ -79,233 +79,13 @@ Window {
         id:mainSplitView
         orientation:Qt.Horizontal
         anchors.fill: parent
-
-        Rectangle{
-                color:"#fffffe"
-                id:chatBox
-//                implicitHeight: mainSplitView.orientation == Qt.Vertical? parent.height/2:parent.height
-                implicitWidth:0
-
-                OpenChatModel {
-                    id:runingChatModel
-                }
-
-                ListView{
-//                    spacing: 10
-                    anchors.margins: 20
-                    id:message_list
-                    width:parent.width
-                    height:parent.height -input_box.height-controller_box.height
-                    model:runingChatModel
-                    spacing: 10
-                    clip: true
-                    delegate:  Rectangle{
-                        color:chatRole=="user"?"#bae8e8":"#e3f6f5";
-                        radius:5
-                        x:10
-                        y:5
-                        width:message_list.width-20
-                        height:chatItem.contentHeight + chatItem.padding*2
-                        TextEdit{
-                            text:chatMessage
-                            width:parent.width
-                            height:parent.height
-                            padding:10
-                            font.pixelSize: 14
-                            id:chatItem
-                            wrapMode:TextEdit.WordWrap
-//                        anchors.margins: 10
-                        }
-                    }
-
-                }
-
-                Rectangle{
-                    color:"#bae8e8"
-                    id:controller_box
-                    width:parent.width
-                    anchors.top: message_list.bottom
-                    height:35
-//                    border.width: 1
-
-
-                    Row {
-//                        id:tool_row
-                        anchors.centerIn: parent
-                        spacing: 5
-                        property int  cellHeight: 26
-                        visible: parent.width>100?true:false
-                        Text {
-                            id: copy_code
-                            width: parent.cellHeight
-                            height: parent.cellHeight
-//                            radius: 2
-                            font.pixelSize: parent.cellHeight
-                            text:''
-
-//                            border.width:1
-                            font.family: iconFont.name
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    pageView.runJavaScript("window.getSelection().toString();", function(selectedText) {
-                                        chat_input_text.text+= selectedText;
-
-                                    });
-                                }
-                            }
-                        }
-                        Text {
-                            id: search_by_dict
-                            width: parent.cellHeight
-                            height: parent.cellHeight
-//                            radius: 2
-                            font.pixelSize: parent.cellHeight
-                            text:''
-
-//                            border.width:1
-                            font.family: iconFont.name
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    chat_input_text.text+= pageView.selectedText;
-//                                        console.log("Clicked color:", colorBlock.color)
-                                }
-                            }
-                        }
-                        ComboBox{
-                            id:openai_mode_names
-                            model: ListModel {
-                                ListElement { text: "gpt-3.5-turbo" }
-                                ListElement { text: "gpt-3.5" }
-                                ListElement { text: "gpt-4" }
-                                ListElement { text: "gpt-4-turbo" }
-                            }
-                        }
-                    }
-
-
-                }
-                Rectangle{
-                    id:input_box
-                    anchors.top:controller_box.bottom
-                    width:parent.width
-//                    border.width: 1
-                    color:"#e3f6f5"
-                    height:chat_input_text.contentHeight>500?500:chat_input_text.contentHeight+50
-                    ScrollView{
-                        anchors.fill: parent
-                        ScrollBar.vertical.policy: ScrollBar.AlwaysOff
-
-                        TextArea {
-                            id:chat_input_text
-    //                        width:parent.width
-                            placeholderText:"Please enter your question, or select text and click “”.\nPress ⌘ + ↩ to send message."
-                            font.pixelSize: 16
-                            width:parent.width
-                            height:input_box.height -50
-                            font.family: iconFont.name
-    //                        anchors.margins: 10
-                            wrapMode:TextEdit.Wrap
-                            padding: 10
-                            focus: true
-                            Keys.forwardTo: [keyHandler]
-                        }
-                        Item {
-                            id: keyHandler
-                            focus: true
-                            Keys.enabled: true
-                            Keys.onPressed: function(event) {
-                                if (Qt.platform.os === "osx") {
-                                        if (event.key === Qt.Key_Return && (event.modifiers & Qt.ControlModifier)) {
-                                            console.log("Command + Return pressed");
-                                            event.accepted = true;
-                                            var msgInfo = chat_input_text.text;
-                                            chat_input_text.text = "";
-                                            runingChatModel.sendMessage(msgInfo,openai_mode_names.currentText);
-
-
-                                        }
-                                } else {
-                                    if (event.key === Qt.Key_Return && (event.modifiers & Qt.MetaModifier)) {
-                                        console.log("Control + Return pressed");
-                                        event.accepted = true;
-                                        var msgInfo = chat_input_text.text;
-                                        chat_input_text.text = "";
-                                        runingChatModel.sendMessage(msgInfo,openai_mode_names.currentText);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-        }
-
         Rectangle{
 
             SplitView {
                 id: splitView
                 anchors.fill: parent
                 orientation:Qt.Horizontal
-                Rectangle{
-                    id:leftBox
-                    SplitView.minimumWidth: 0
-                    SplitView.maximumWidth:  400
-                    implicitWidth: 0
-                    color:"#fffffe"
-                    Column{
-                        Rectangle{
-                            id:bookIconBox
-                            width:leftBox.width
-                            height:200 +20
-                            visible: leftBox.implicitWidth>=200?true:false
 
-
-            //                border.width:1
-                            Image{
-                                id:bookIcon
-                                source:""
-                                anchors.margins: 10
-                                anchors.centerIn: parent
-                            }
-                        }
-                        ListView {
-                            id: tocListView
-                            anchors.margins: 10
-                            width:leftBox.width
-                            height:leftBox.height - bookIconBox.height
-                            model: tableOfContent
-                            delegate:  Item{
-                                width: tocListView.width
-                                height: textItem.implicitHeight
-                                Text {
-                                    id:textItem
-                                    text: chapterName
-                                    font.pixelSize: 16
-                                    padding: 8
-                                    width:parent.width
-                                    wrapMode:Text.Wrap
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: function(){
-
-                                        tocListView.currentIndex = index;
-                                        pageView.url = "mybook://book.local"+chapterUrl;
-
-                                    }
-                                }
-                            }
-                            highlight: Rectangle {
-                                color: "#bae8e8"
-                            }
-                            highlightMoveDuration:100
-                            focus: true
-                            clip:true
-
-                        }
-                    }
-                }
                 Rectangle{
                     SplitView.minimumWidth: 300
                     SplitView.maximumWidth:  parent.width
@@ -411,8 +191,9 @@ Window {
                                     anchors.fill: parent
                                     onClicked: {
 
-                                        if(leftBox.implicitWidth==0) leftBox.implicitWidth=200;
-                                        else leftBox.implicitWidth=0;
+//                                        if(leftBox.implicitWidth==0) leftBox.implicitWidth=200;
+//                                        else leftBox.implicitWidth=0;
+                                        leftBox.open();
                                     }
                                 }
                             }
@@ -421,14 +202,14 @@ Window {
                                 width: parent.cellHeight
                                 height: parent.cellHeight
                                 font.pixelSize: parent.cellHeight
-                                text:''
+                                text:''
                                 font.family: iconFont.name
                                 MouseArea {
                                     anchors.fill: parent
                                     onClicked: {
-
-                                        if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
-                                        else chatBox.implicitWidth=0;
+                                          chatBox.open();
+//                                        if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
+//                                        else chatBox.implicitWidth=0;
                                     }
                                 }
                             }
@@ -486,6 +267,247 @@ Window {
         }
 
     }
+
+    Popup{
+        id:leftBox
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width:300
+        height:root.height
+//        Rectangle {
+//            anchors.fill: parent
+//            color: "#fffffe"
+//            radius: 10
+//        }
+        Rectangle {
+                    anchors.fill: parent
+                    color: "#fffffe"
+        }
+        Column{
+            Rectangle{
+                id:bookIconBox
+                width:leftBox.width-20
+                height:200 +20
+//                visible: leftBox.implicitWidth>=200?true:false
+
+
+//                border.width:1
+                Image{
+                    id:bookIcon
+                    source:""
+                    anchors.margins: 10
+                    anchors.centerIn: parent
+                }
+            }
+            ListView {
+                id: tocListView
+//                anchors.margins: 10
+                width:leftBox.width
+                height:leftBox.height - bookIconBox.height
+                model: tableOfContent
+                delegate:  Item{
+                    width: tocListView.width
+                    height: textItem.implicitHeight
+                    Text {
+                        id:textItem
+                        text: chapterName
+                        font.pixelSize: 16
+                        padding: 8
+                        width:parent.width
+                        wrapMode:Text.Wrap
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: function(){
+
+                            tocListView.currentIndex = index;
+                            pageView.url = "mybook://book.local"+chapterUrl;
+
+                        }
+                    }
+                }
+                highlight: Rectangle {
+                    color: "#bae8e8"
+                    width:leftBox.width-20
+                }
+                highlightMoveDuration:100
+                focus: true
+                clip:true
+
+            }
+        }
+    }
+
+    Popup{
+//            color:"#fffffe"
+            id:chatBox
+//                implicitHeight: mainSplitView.orientation == Qt.Vertical? parent.height/2:parent.height
+//            implicitWidth:0
+            modal: true
+            focus: true
+            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+            width:500
+            height:root.height
+
+            OpenChatModel {
+                id:runingChatModel
+            }
+            Rectangle {
+                        anchors.fill: parent
+                        color: "#fffffe"
+            }
+            ListView{
+//                    spacing: 10
+                anchors.margins: 20
+                id:message_list
+                width:parent.width
+                height:parent.height -input_box.height-controller_box.height
+                model:runingChatModel
+                spacing: 10
+                clip: true
+                delegate:  Rectangle{
+                    color:chatRole=="user"?"#bae8e8":"#e3f6f5";
+                    radius:5
+                    x:10
+                    y:5
+                    width:message_list.width-20
+                    height:chatItem.contentHeight + chatItem.padding*2
+                    TextEdit{
+                        text:chatMessage
+                        width:parent.width
+                        height:parent.height
+                        padding:10
+                        font.pixelSize: 14
+                        id:chatItem
+                        wrapMode:TextEdit.WordWrap
+//                        anchors.margins: 10
+                    }
+                }
+
+            }
+
+            Rectangle{
+                color:"#bae8e8"
+                id:controller_box
+                width:parent.width
+                anchors.top: message_list.bottom
+                height:35
+//                    border.width: 1
+
+
+                Row {
+//                        id:tool_row
+                    anchors.centerIn: parent
+                    spacing: 5
+                    property int  cellHeight: 26
+                    visible: parent.width>100?true:false
+                    Text {
+                        id: copy_code
+                        width: parent.cellHeight
+                        height: parent.cellHeight
+//                            radius: 2
+                        font.pixelSize: parent.cellHeight
+                        text:''
+
+//                            border.width:1
+                        font.family: iconFont.name
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                pageView.runJavaScript("window.getSelection().toString();", function(selectedText) {
+                                    chat_input_text.text+= selectedText;
+
+                                });
+                            }
+                        }
+                    }
+                    Text {
+                        id: search_by_dict
+                        width: parent.cellHeight
+                        height: parent.cellHeight
+//                            radius: 2
+                        font.pixelSize: parent.cellHeight
+                        text:''
+
+//                            border.width:1
+                        font.family: iconFont.name
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                chat_input_text.text+= pageView.selectedText;
+//                                        console.log("Clicked color:", colorBlock.color)
+                            }
+                        }
+                    }
+                    ComboBox{
+                        id:openai_mode_names
+                        model: ListModel {
+                            ListElement { text: "gpt-3.5-turbo" }
+                            ListElement { text: "gpt-3.5" }
+                            ListElement { text: "gpt-4" }
+                            ListElement { text: "gpt-4-turbo" }
+                        }
+                    }
+                }
+
+
+            }
+            Rectangle{
+                id:input_box
+                anchors.top:controller_box.bottom
+                width:parent.width
+//                    border.width: 1
+                color:"#e3f6f5"
+                height:chat_input_text.contentHeight>500?500:chat_input_text.contentHeight+50
+                ScrollView{
+                    anchors.fill: parent
+                    ScrollBar.vertical.policy: ScrollBar.AlwaysOff
+
+                    TextArea {
+                        id:chat_input_text
+//                        width:parent.width
+                        placeholderText:"Please enter your question, or select text and click “”.\nPress ⌘ + ↩ to send message."
+                        font.pixelSize: 16
+                        width:parent.width
+                        height:input_box.height -50
+                        font.family: iconFont.name
+//                        anchors.margins: 10
+                        wrapMode:TextEdit.Wrap
+                        padding: 10
+                        focus: true
+                        Keys.forwardTo: [keyHandler]
+                    }
+                    Item {
+                        id: keyHandler
+                        focus: true
+                        Keys.enabled: true
+                        Keys.onPressed: function(event) {
+                            if (Qt.platform.os === "osx") {
+                                    if (event.key === Qt.Key_Return && (event.modifiers & Qt.ControlModifier)) {
+                                        console.log("Command + Return pressed");
+                                        event.accepted = true;
+                                        var msgInfo = chat_input_text.text;
+                                        chat_input_text.text = "";
+                                        runingChatModel.sendMessage(msgInfo,openai_mode_names.currentText);
+
+
+                                    }
+                            } else {
+                                if (event.key === Qt.Key_Return && (event.modifiers & Qt.MetaModifier)) {
+                                    console.log("Control + Return pressed");
+                                    event.accepted = true;
+                                    var msgInfo = chat_input_text.text;
+                                    chat_input_text.text = "";
+                                    runingChatModel.sendMessage(msgInfo,openai_mode_names.currentText);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
 
     Timer {
             id: selectionTimer
