@@ -75,198 +75,176 @@ Window {
 
     }
 
-    SplitView {
-        id:mainSplitView
-        orientation:Qt.Horizontal
-        anchors.fill: parent
-        Rectangle{
 
-            SplitView {
-                id: splitView
-                anchors.fill: parent
-                orientation:Qt.Horizontal
+    Rectangle{
+        id:centerBox
+        color:"#fffffe"
+        width:parent.width
+        height:parent.height
 
-                Rectangle{
-                    SplitView.minimumWidth: 300
-                    SplitView.maximumWidth:  parent.width
-                    id:centerBox
-                    color:"#fffffe"
-                    implicitWidth: (root.width-leftBox.width)/2
+        WebEngineView {
+                id:pageView
 
-
-                    WebEngineView {
-                            id:pageView
-
-                            height:parent.height - 35
-                            width: parent.width
+                height:parent.height - 35
+                width: parent.width
+//                settings.defaultFontSize:16
 //                            property  int  scrollY: 0
-                            onLoadingChanged: function (loadRequest) {
-                                console.log(loadRequest.status);
-                                if (loadRequest.status ===2) {
-                                    console.log("page load success..");
-                                    runJavaScript(`var paragraphs = document.getElementsByTagName('p');
-                                                  for (var i = 0; i < paragraphs.length; i++)
-                                                  { paragraphs[i].style.textIndent = '2em'; }
+                onLoadingChanged: function (loadRequest) {
+                    console.log(loadRequest.status);
+                    if (loadRequest.status ===2) {
+                        console.log("page load success..");
+                        runJavaScript(`var paragraphs = document.getElementsByTagName('p');
+                                      for (var i = 0; i < paragraphs.length; i++)
+                                      { paragraphs[i].style.textIndent = '2em'; }
 
-                                                  `);
-                                    runJavaScript(`var imgs = document.getElementsByTagName('img');
-                                                  for (var i = 0; i < imgs.length; i++)
-                                                  { imgs[i].style.maxWidth = '100%'; }
+                                      `);
+                        runJavaScript(`var imgs = document.getElementsByTagName('img');
+                                      for (var i = 0; i < imgs.length; i++)
+                                      { imgs[i].style.maxWidth = '100%'; }
 
-                                                  `);
-                                    runJavaScript("document.documentElement.style.overflowX = 'hidden';");
-//                                    runJavaScript("document.documentElement.style.fontSize = '16px';");
-//                                    console.log("read index....",tableOfContent.readIndex());
-//                                    userdata.read(root.bookName,tableOfContent.readIndex(),0);
-//                                    pageView.scrollBy(0,root.onstartScrollTo);
-                                    console.log(root.onstartScrollTo,"scrollPos");
-                                    runJavaScript(`window.scrollTo(0,`+root.onstartScrollTo+`)`);
+                                      `);
+                        runJavaScript("document.documentElement.style.overflowX = 'hidden';");
+                        console.log(root.onstartScrollTo,"scrollPos");
 
-                                }
-                            }
-
-                            onScrollPositionChanged:function(position){
-//                                console.log("position",position.y);
-//                                scrollY = position.y;
-                                selectionTimer.restart();
-                            }
+                        runJavaScript(`window.scrollTo(0,`+root.onstartScrollTo+`)`);
 
                     }
+                }
 
-                    Rectangle{
-                        color:"#bae8e8"
-                        id:webview_btns
-                        width:parent.width
-                        anchors.top: pageView.bottom
-                        height:35
-    //                    border.width: 1
+                onScrollPositionChanged:function(position){
+//                                console.log("position",position.y);
+//                                scrollY = position.y;
+                    selectionTimer.restart();
+                }
 
-                        Row {
-                            id:tool_row
-                            anchors.centerIn: parent
-                            spacing: 5
-                            property int  cellHeight: 26
-                            Repeater {
-                                model: ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
-                                delegate: Rectangle {
-                                    id: colorBlock
-                                    width: parent.cellHeight
-                                    height: parent.cellHeight
-                                    color:  modelData
-                                    radius: 2
-                                    border.width:1
-    //                                function getColor  (index) {
-    //                                    console.log("index==== ",index);
-    //                                    var colors = ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
-    //                                    return colors[index]
-    //                                }
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            pageView.runJavaScript(`
-                                                            var selectedText = window.getSelection();
-                                                            var range = selectedText.getRangeAt(0);
-                                                            var span = document.createElement('span');
-                                                            span.style.backgroundColor ="`+modelData+`";
-                                                            range.surroundContents(span);
-                                                        `);
-    //                                        pageView.text
-    //                                        console.log("Clicked color:", colorBlock.color)
-    //                                        pageView.text= pageView.text.replace(pageView.selectedText,"<span color='"+colorBlock.color+"'>"+pageView.selectedText+"</span>")
-                                        }
-                                    }
+        }
 
+        Rectangle{
+            color:"#bae8e8"
+            id:webview_btns
+            width:parent.width
+            anchors.top: pageView.bottom
+            height:35
+//                    border.width: 1
 
-                                }
+            Row {
+                id:tool_row
+                anchors.centerIn: parent
+                spacing: 5
+                property int  cellHeight: 26
+                Repeater {
+                    model: ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
+                    delegate: Rectangle {
+                        id: colorBlock
+                        width: parent.cellHeight
+                        height: parent.cellHeight
+                        color:  modelData
+                        radius: 2
+                        border.width:1
+//                                function getColor  (index) {
+//                                    console.log("index==== ",index);
+//                                    var colors = ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
+//                                    return colors[index]
+//                                }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                pageView.runJavaScript(`
+                                                var selectedText = window.getSelection();
+                                                var range = selectedText.getRangeAt(0);
+                                                var span = document.createElement('span');
+                                                span.style.backgroundColor ="`+modelData+`";
+                                                range.surroundContents(span);
+                                            `);
+//                                        pageView.text
+//                                        console.log("Clicked color:", colorBlock.color)
+//                                        pageView.text= pageView.text.replace(pageView.selectedText,"<span color='"+colorBlock.color+"'>"+pageView.selectedText+"</span>")
                             }
-
-                            Text {
-                                id: open_menu
-                                width: parent.cellHeight
-                                height: parent.cellHeight
-                                font.pixelSize: parent.cellHeight
-                                text:''
-                                font.family: iconFont.name
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-
-//                                        if(leftBox.implicitWidth==0) leftBox.implicitWidth=200;
-//                                        else leftBox.implicitWidth=0;
-                                        leftBox.open();
-                                    }
-                                }
-                            }
-                            Text {
-                                id: open_chat
-                                width: parent.cellHeight
-                                height: parent.cellHeight
-                                font.pixelSize: parent.cellHeight
-                                text:''
-                                font.family: iconFont.name
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-                                          chatBox.open();
-//                                        if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
-//                                        else chatBox.implicitWidth=0;
-                                    }
-                                }
-                            }
-                            Text {
-
-                                width: parent.cellHeight
-                                height: parent.cellHeight
-    //                            radius: 2
-                                font.pixelSize: parent.cellHeight
-                                text:''
-
-    //                            border.width:1
-                                font.family: iconFont.name
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: function(){
-                                         // 上一页
-                                       var u = tableOfContent.prevPage();
-                                        if(u!=="") pageView.url = "mybook://book.local"+u;
-                                    }
-                                }
-                            }
-
-                            Text {
-                                width: parent.cellHeight
-                                height: parent.cellHeight
-    //                            radius: 2
-                                font.pixelSize: parent.cellHeight
-                                text:''
-
-    //                            border.width:1
-                                font.family: iconFont.name
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked:function() {
-
-                                       // 下一页
-                                        var u= tableOfContent.nextPage();
-                                        if(u!=="")
-                                        pageView.url = "mybook://book.local"+u;
-                                    }
-                                }
-                            }
-
-
-
                         }
 
 
                     }
-
                 }
 
+                Text {
+                    id: open_menu
+                    width: parent.cellHeight
+                    height: parent.cellHeight
+                    font.pixelSize: parent.cellHeight
+                    text:''
+                    font.family: iconFont.name
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            leftBox.open();
+                        }
+                    }
+                }
+                Text {
+                    id: open_chat
+                    width: parent.cellHeight
+                    height: parent.cellHeight
+                    font.pixelSize: parent.cellHeight
+                    text:''
+                    font.family: iconFont.name
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                              chatBox.open();
+//                                        if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
+//                                        else chatBox.implicitWidth=0;
+                        }
+                    }
+                }
+                Text {
+
+                    width: parent.cellHeight
+                    height: parent.cellHeight
+//                            radius: 2
+                    font.pixelSize: parent.cellHeight
+                    text:''
+
+//                            border.width:1
+                    font.family: iconFont.name
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: function(){
+                             // 上一页
+                           var u = tableOfContent.prevPage();
+                            if(u!=="") pageView.url = "mybook://book.local"+u;
+                        }
+                    }
+                }
+
+                Text {
+                    width: parent.cellHeight
+                    height: parent.cellHeight
+//                            radius: 2
+                    font.pixelSize: parent.cellHeight
+                    text:''
+
+//                            border.width:1
+                    font.family: iconFont.name
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked:function() {
+
+                           // 下一页
+                            var u= tableOfContent.nextPage();
+                            if(u!=="")
+                            pageView.url = "mybook://book.local"+u;
+                            root.onstartScrollTo = 0;
+                        }
+                    }
+                }
             }
         }
-
     }
+
+
+
+
+
 
     Popup{
         id:leftBox
@@ -283,12 +261,14 @@ Window {
         Rectangle {
                     anchors.fill: parent
                     color: "#fffffe"
+                    radius: 10
         }
         Column{
             Rectangle{
                 id:bookIconBox
                 width:leftBox.width-20
                 height:200 +20
+                radius: 10
 //                visible: leftBox.implicitWidth>=200?true:false
 
 
@@ -304,7 +284,7 @@ Window {
                 id: tocListView
 //                anchors.margins: 10
                 width:leftBox.width
-                height:leftBox.height - bookIconBox.height
+                height:leftBox.height - bookIconBox.height -20
                 model: tableOfContent
                 delegate:  Item{
                     width: tocListView.width
