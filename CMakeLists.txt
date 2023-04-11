@@ -18,7 +18,7 @@ set_source_files_properties(${app_icon_macos} PROPERTIES
 
 
 add_subdirectory(quazip)
-find_package(Qt6 6.5.0 COMPONENTS QuickControls2 WebEngineQuick QuickControls2Impl Sql GUI Quick xml REQUIRED)
+find_package(Qt6 6.5.0 COMPONENTS QuickControls2 WebView QuickControls2Impl Sql GUI Quick xml REQUIRED)
 qt_add_resources(RESOURCE_FILES res.qrc)
 
 qt_add_executable(appnadoview
@@ -66,7 +66,7 @@ set_target_properties(appnadoview PROPERTIES
 )
 
 target_link_libraries(appnadoview
-    PRIVATE Qt6::QuickControls2 Qt6::QuickControls2Impl Qt6::WebEngineQuick Qt6::Sql Qt6::Gui  Qt6::Quick Qt6::Xml  QuaZip::QuaZip)
+    PRIVATE Qt6::QuickControls2 Qt6::QuickControls2Impl Qt6::WebView Qt6::Sql Qt6::Gui  Qt6::Quick Qt6::Xml  QuaZip::QuaZip)
 
 install(TARGETS appnadoview
     BUNDLE DESTINATION .

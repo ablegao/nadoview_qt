@@ -196,6 +196,26 @@ Window {
                         }
                     }
                 }
+
+                Text {
+
+                    width: parent.cellHeight
+                    height: parent.cellHeight
+//                            radius: 2
+                    font.pixelSize: parent.cellHeight
+                    text:''
+
+//                            border.width:1
+                    font.family: iconFont.name
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: function(){
+                             // 标记
+
+                        }
+                    }
+                }
+
                 Text {
 
                     width: parent.cellHeight
@@ -237,6 +257,28 @@ Window {
                         }
                     }
                 }
+
+                Text {
+                    width: parent.cellHeight
+                    height: parent.cellHeight
+//                            radius: 2
+                    font.pixelSize: parent.cellHeight
+                    text:''
+
+//                            border.width:1
+                    font.family: iconFont.name
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked:function() {
+
+//                           // 下一页
+//                            var u= tableOfContent.nextPage();
+//                            if(u!=="")
+//                            pageView.url = "mybook://book.local"+u;
+//                            root.onstartScrollTo = 0;
+                        }
+                    }
+                }
             }
         }
     }
@@ -252,7 +294,7 @@ Window {
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         width:300
-        height:root.height
+        height:root.height-webview_btns.height
 //        Rectangle {
 //            anchors.fill: parent
 //            color: "#fffffe"
@@ -322,13 +364,12 @@ Window {
     Popup{
 //            color:"#fffffe"
             id:chatBox
-//                implicitHeight: mainSplitView.orientation == Qt.Vertical? parent.height/2:parent.height
-//            implicitWidth:0
             modal: true
             focus: true
             closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
             width:500
-            height:root.height
+            height:root.height -webview_btns.height
+            x: parent.width - width
 
             OpenChatModel {
                 id:runingChatModel
@@ -486,6 +527,9 @@ Window {
                     }
                 }
             }
+        Component.onCompleted: function(){
+            chatBox.x = Qt.screen.availableGeometry.width - chatBox.width;
+        }
     }
 
 
