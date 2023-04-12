@@ -91,6 +91,14 @@ Q_INVOKABLE void TableOfContent::openBook(const QString &bookUri) {
     //    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler("mybook",
     //                                                                 mBook);
 }
+Q_INVOKABLE QByteArray TableOfContent::openPage(const QString &url) {
+    QRegularExpression re("<p(?![^>]*\\bstyle=)[^>]*>");
+
+    QString html = mBook->openFileByUrl(url);
+    html.replace(re, "<p style='text-indent: 32px;'>");
+
+    return html.toUtf8();
+}
 
 Q_INVOKABLE QString TableOfContent::nextPage() { return mBook->nextPage(); }
 Q_INVOKABLE QString TableOfContent::prevPage() { return mBook->prevPage(); }
@@ -144,6 +152,16 @@ QString TableOfContent::indexToUrl(int index) {
     return mBook->indexToUrl(index);
 }
 int TableOfContent::readIndex() { return mBook->readIndex(); }
+
+QString TableOfContent::absoluteFilePath(const QString &u) {
+    return mBook->absoluteFilePath(u);
+}
+
+void TableOfContent::setSize(int w, int h) {
+    screenWidth = w;
+    screenHeight = h;
+    //    currentPageUrl = pageUrl;
+}
 
 // void TableOfContent::requestStarted(QWebEngineUrlRequestJob *request) {
 //     qDebug() << "Request started for URL:" << request;

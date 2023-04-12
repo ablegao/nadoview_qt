@@ -1,7 +1,10 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+//import QtNetwork
 import NadoView 1.0
-import QtWebEngine 1.10
+//import QtWebView 1.1
+
+
 Window {
     id: root
     visible: true
@@ -45,15 +48,19 @@ Window {
         bookIcon.source = source;
         runingChatModel.addMessage("Reading "+obj.name,"system");
 
-        if(tableOfContent.useMarkDown()){
-            pageView.textFormat = Text.MarkdownText;
-        }
-
+//        if(tableOfContent.useMarkDown()){
+//            pageView.textFormat = Text.MarkdownText;
+//        }
+        tableOfContent.setSize(flick.width,flick.height);
         tocListView.currentIndex = 0;
         var read = userdata.openBook(obj.name);
         console.log(JSON.stringify(read));
-        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
-        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
+//        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
+//        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
+        if(read.last_read_file!=="") pageView.text =  tableOfContent.openPage(tableOfContent.indexToUrl(read.last_read_index));
+        else pageView.text = tableOfContent.openPage(obj.firstPageUrl);
+//        pageView.text = "<p>test01</p><p style='text-indent:20px'>test01</p>"
+
         onstartScrollTo = read.last_read_scroll_number;
 //        console.log(JSON.stringify(out));
 //        tableOfContent.openChapter(0);
@@ -81,49 +88,88 @@ Window {
         color:"#fffffe"
         width:parent.width
         height:parent.height
+        NetworkManager {
+            id:network_access_manager
+        }
+        Flickable {
+             id: flick
 
-        WebEngineView {
-                id:pageView
+             width: parent.width
+             height:parent.height - webview_btns.height-20
+             contentWidth: parent.width
+             contentHeight: pageView.contentHeight +40
+             onWidthChanged: function(){
+//                console.log(flick.width);
+                 tableOfContent.setSize(flick.width,flick.height);
+             }
+//             property int maximumFlickableX: contentWidth - width // 计算滚动的最大值
+//             onContentXChanged: contentX = Math.min(Math.max(0, contentX), maximumFlickableX) // 当滚动超过最大值时，将滚动位置限制在最大值内
+             clip: true
+             function getScrollBarPosition(searchString) {
+                 // 获取Flickable中的内容高度和可见高度
+                 var contentHeight = flick.contentHeight
+                 var visibleHeight = flick.height
 
-                height:parent.height - 35
-                width: parent.width
-//                settings.defaultFontSize:16
-//                            property  int  scrollY: 0
-                onLoadingChanged: function (loadRequest) {
-                    console.log(loadRequest.status);
-                    if (loadRequest.status ===2) {
-                        console.log("page load success..");
-                        runJavaScript(`var paragraphs = document.getElementsByTagName('p');
-                                      for (var i = 0; i < paragraphs.length; i++)
-                                      { paragraphs[i].style.textIndent = '2em'; }
+                 // 获取TextEdit中的文本字符串
+                 var text = pageView.toPlainText();
 
-                                      `);
-                        runJavaScript(`var imgs = document.getElementsByTagName('img');
-                                      for (var i = 0; i < imgs.length; i++)
-                                      { imgs[i].style.maxWidth = '100%'; }
+                 // 使用QFontMetrics测量TextEdit的字体和文本宽度
+                 var fontMetrics = new QFontMetrics(textEdit.font)
+                 var textWidth = fontMetrics.width(text)
 
-                                      `);
-                        runJavaScript("document.documentElement.style.overflowX = 'hidden';");
-                        console.log(root.onstartScrollTo,"scrollPos");
+                 // 使用QRegularExpression在文本字符串中查找所需的字符串，并计算它在整个字符串中的位置
+                 var re = new QRegularExpression(searchString)
+                 var match = re.match(text)
+                 var position = match.capturedStart()
 
-                        runJavaScript(`window.scrollTo(0,`+root.onstartScrollTo+`)`);
+                 // 使用已知的内容高度、可见高度、文本宽度和字符串位置计算滚动条的位置
+                 var scrollBarPosition = position * (contentHeight - visibleHeight) / (text.length - visibleHeight / fontMetrics.lineSpacing) / textWidth
 
+                 return scrollBarPosition
+            }
+            function ensureVisible(r)
+            {
+                  if (contentX >= r.x)
+                      contentX = r.x;
+                  else if (contentX+width <= r.x+r.width)
+                      contentX = r.x+r.width-width;
+                  if (contentY >= r.y)
+                      contentY = r.y;
+                  else if (contentY+height <= r.y+r.height)
+                      contentY = r.y+r.height-height;
+            }
+
+            TextEdit {
+                    id:pageView
+//                    width: flick.width-20
+//                    x:10
+                    x:20
+                    y:20
+                    width: flick.width-40
+
+
+                    textFormat: Text.RichText
+                    wrapMode:TextEdit.Wrap
+                    readOnly: true
+                    selectByMouse: true
+                    focus: true
+                    baseUrl: "image://mybook/"
+                    font.pixelSize: 16
+
+                    onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
+                    onLinkActivated:function(url){
+//                        console.log();
+                        pageView.text = tableOfContent.openPage(tableOfContent.absoluteFilePath(url));
                     }
-                }
 
-                onScrollPositionChanged:function(position){
-//                                console.log("position",position.y);
-//                                scrollY = position.y;
-                    selectionTimer.restart();
-                }
-
+            }
         }
 
         Rectangle{
             color:"#bae8e8"
             id:webview_btns
             width:parent.width
-            anchors.top: pageView.bottom
+            anchors.top: flick.bottom
             height:35
 //                    border.width: 1
 
@@ -231,7 +277,7 @@ Window {
                         onClicked: function(){
                              // 上一页
                            var u = tableOfContent.prevPage();
-                            if(u!=="") pageView.url = "mybook://book.local"+u;
+                            if(u!=="") pageView.text =tableOfContent.openPage(u);
                         }
                     }
                 }
@@ -252,7 +298,7 @@ Window {
                            // 下一页
                             var u= tableOfContent.nextPage();
                             if(u!=="")
-                            pageView.url = "mybook://book.local"+u;
+                            pageView.text =tableOfContent.openPage(u);
                             root.onstartScrollTo = 0;
                         }
                     }
@@ -344,7 +390,9 @@ Window {
                         onClicked: function(){
 
                             tocListView.currentIndex = index;
-                            pageView.url = "mybook://book.local"+chapterUrl;
+//                            pageView.url = "mybook://book.local"+chapterUrl;
+                            pageView.text = tableOfContent.openPage(chapterUrl);
+                            console.log(chapterUrl);
 
                         }
                     }
@@ -527,9 +575,6 @@ Window {
                     }
                 }
             }
-        Component.onCompleted: function(){
-            chatBox.x = Qt.screen.availableGeometry.width - chatBox.width;
-        }
     }
 
 

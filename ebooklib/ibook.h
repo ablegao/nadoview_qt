@@ -42,6 +42,8 @@ public:
     Q_INVOKABLE virtual QString getFirstPageUrl() = 0;
     virtual QString nextPage() = 0;
     virtual QString prevPage() = 0;
+    virtual QString getCurrentPageUrl() = 0;
+    virtual QString absoluteFilePath(const QString &u) = 0;
     Q_INVOKABLE virtual QByteArray openFileByUrl(const QString &url) = 0;
 
     // 当前阅读的所在页索引

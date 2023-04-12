@@ -7,6 +7,7 @@
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QRegularExpression>
+
 //#include <QWebEngineProfile>
 #include <qnetworkaccessmanager.h>
 
@@ -36,9 +37,14 @@ public:
     Q_INVOKABLE QString markdownToHtml(const QString &fulltext, int fontsize,
                                        int w, int h);
     Q_INVOKABLE QString indexToUrl(int index);
+    Q_INVOKABLE QByteArray openPage(const QString &url);
     Q_INVOKABLE int readIndex();
     Q_INVOKABLE bool useMarkDown();
     //    void requestStarted(QWebEngineUrlRequestJob *request) override;
+    int screenWidth, screenHeight;
+    Q_INVOKABLE void setSize(int w, int h);
+
+    Q_INVOKABLE QString absoluteFilePath(const QString &u);
 
     //    QWebEngineUrlSchemeHandler *urlSchemeHandler();
 signals:

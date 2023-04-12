@@ -264,15 +264,8 @@ QString EpubBook::indexToUrl(int index) {
         return "";
     }
     mSpineIndex = index;
-    QString hrefID = m_Spine.at(index).toVariantMap()["idref"].toString();
-    for (int i = 0; i < m_Manifest.size(); i++) {
-        if (hrefID == m_Manifest.at(i).toVariantMap()["id"].toString()) {
-            QString href = m_Manifest.at(i).toVariantMap()["href"].toString();
-            return QDir::cleanPath(tocBase.filePath(href));
-        }
-    }
 
-    return "";
+    return getCurrentPageUrl();
 }
 QString EpubBook::getFirstPageUrl() {
     for (int i = 0; i < m_Spine.size(); i++) {
@@ -282,21 +275,11 @@ QString EpubBook::getFirstPageUrl() {
             continue;
         }
         mSpineIndex = i;
-        QVariantMap item = m_Spine.at(i).toVariantMap();
-        for (i = 0; i < m_Manifest.size(); i++) {
-            if (item["idref"].toString() ==
-                m_Manifest.at(i).toVariantMap()["id"].toString()) {
-                QString href =
-                    m_Manifest.at(i).toVariantMap()["href"].toString();
-                return QDir::cleanPath(tocBase.filePath(href));
-            }
-        }
 
-        return "";
+        return getCurrentPageUrl();
     }
     return "";
 }
-
 int EpubBook::readIndex() { return mSpineIndex; }
 // void EpubBook::setReadIndex(int index) { mSpineIndex = index; }
 
@@ -306,15 +289,8 @@ QString EpubBook::nextPage() {
     }
     mSpineIndex += 1;
     //    int i = 0;
-    QVariantMap item = m_Spine.at(mSpineIndex).toVariantMap();
-    for (int i = 0; i < m_Manifest.size(); i++) {
-        if (item["idref"].toString() ==
-            m_Manifest.at(i).toVariantMap()["id"].toString()) {
-            QString href = m_Manifest.at(i).toVariantMap()["href"].toString();
-            return QDir::cleanPath(tocBase.filePath(href));
-        }
-    }
-    return "";
+
+    return getCurrentPageUrl();
 }
 
 QString EpubBook::prevPage() {
@@ -323,6 +299,11 @@ QString EpubBook::prevPage() {
     }
     mSpineIndex -= 1;
     //    int i = 0;
+
+    return getCurrentPageUrl();
+}
+
+QString EpubBook::getCurrentPageUrl() {
     QVariantMap item = m_Spine.at(mSpineIndex).toVariantMap();
     for (int i = 0; i < m_Manifest.size(); i++) {
         if (item["idref"].toString() ==
@@ -408,4 +389,13 @@ QByteArray EpubBook::openFileByUrl(const QString &url) {
     }
     //    qDebug() << "read page ..." << out.at(0);
     return "";
+}
+
+QString EpubBook::absoluteFilePath(const QString &u) {
+    QFileInfo fileInfo(getCurrentPageUrl());
+    if (u.mid(0, 1) != "/") {
+        return QDir::cleanPath(fileInfo.dir().absoluteFilePath(u));
+    }
+
+    return u;
 }

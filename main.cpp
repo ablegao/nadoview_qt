@@ -2,34 +2,34 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
-#include <QtWebEngineQuick>
+//#include <QtWebEngineQuick>
 
-#include "customurlschemehandler.h"
+//#include "customurlschemehandler.h"
 #include "myapplication.h"
 #include "mybookimageschemehandler.h"
+#include "networkmanager.h"
 #include "openchatmodel.h"
 #include "tableofcontent.h"
 #include "userdata.h"
 #include <QLocale>
 #include <QTranslator>
-
 int main(int argc, char *argv[]) {
 
-    QtWebEngineQuick::initialize();
+    //    QtWebEngineQuick::initialize();
 
     MyApplication app(argc, argv);
 
     //    QFont font("SimSun", 14);
     //    app.setFont(font);
 
-    QWebEngineUrlScheme customScheme(QByteArrayLiteral("mybook"));
-    QWebEngineUrlScheme::registerScheme(customScheme);
+    //    QWebEngineUrlScheme customScheme(QByteArrayLiteral("mybook"));
+    //    QWebEngineUrlScheme::registerScheme(customScheme);
     TableOfContent book{};
 
-    CustomUrlSchemeHandler *urlScheme = new CustomUrlSchemeHandler();
-    urlScheme->book = &book;
-    QWebEngineProfile *profile = QWebEngineProfile::defaultProfile();
-    profile->installUrlSchemeHandler("mybook", urlScheme);
+    //    CustomUrlSchemeHandler *urlScheme = new CustomUrlSchemeHandler();
+    //    urlScheme->book = &book;
+    //    QWebEngineProfile *profile = QWebEngineProfile::defaultProfile();
+    //    profile->installUrlSchemeHandler("mybook", urlScheme);
 
     MyBookImageSchemeHandler *scheme = new MyBookImageSchemeHandler();
     //    scheme = new (MyBookUrlSchemeHandler);
@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
 
     // open chat model 注册
     qmlRegisterType<OpenChatModel>("NadoView", 1, 0, "OpenChatModel");
+    qmlRegisterType<NetworkManager>("NadoView", 1, 0, "NetworkManager");
     // 初始化引擎
     QQmlApplicationEngine engine;
     engine.addImageProvider(QLatin1String("mybook"), scheme);

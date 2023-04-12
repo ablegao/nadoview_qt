@@ -45,6 +45,8 @@ public:
     virtual QString nextPage() override;
     virtual QString prevPage() override;
     QString indexToUrl(int index) override;
+    QString getCurrentPageUrl() override;
+    QString absoluteFilePath(const QString &u) override;
     //    // 反馈两个id , 一个是url 所在的startPage =1 的id ,第二个是rowid
     //    标记的id ,
     //    // 如果没有找到，会和第一个一样
