@@ -44,7 +44,7 @@ Window {
         root.bookName = obj.name;
         root.lang = obj.lang;
         var source = "image://mybook/"+obj.coverImg+"?180x240";
-        console.log(obj.firstPageUrl);
+//        console.log("image......",obj.firstPageUrl,source);
         bookIcon.source = source;
         runingChatModel.addMessage("Reading "+obj.name,"system");
 
@@ -57,8 +57,21 @@ Window {
         console.log(JSON.stringify(read));
 //        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
 //        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
-        if(read.last_read_file!=="") pageView.text =  tableOfContent.openPage(tableOfContent.indexToUrl(read.last_read_index));
-        else pageView.text = tableOfContent.openPage(obj.firstPageUrl);
+        var url  = obj.firstPageUrl;
+        if(read.last_read_file!=="")  url = tableOfContent.indexToUrl(read.last_read_index);
+
+        var directoryPath = '';
+        var pathArray = url.split('/');
+        for (var i = 0; i < pathArray.length - 1; i++) {
+          directoryPath += pathArray[i] + '/';
+        }
+//        console.log("page url ...",url, directoryPath);
+        pageView.baseUrl = "image://mybook"+directoryPath;
+//        console.log(tableOfContent.openPage(url));
+
+
+        pageView.text = tableOfContent.openPage(url);
+//        else pageView.text = tableOfContent.openPage();
 //        pageView.text = "<p>test01</p><p style='text-indent:20px'>test01</p>"
 
         onstartScrollTo = read.last_read_scroll_number;
@@ -153,7 +166,7 @@ Window {
                     readOnly: true
                     selectByMouse: true
                     focus: true
-                    baseUrl: "image://mybook/"
+//                    baseUrl: "image://mybook/"
                     font.pixelSize: 16
 
                     onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
@@ -161,7 +174,6 @@ Window {
 //                        console.log();
                         pageView.text = tableOfContent.openPage(tableOfContent.absoluteFilePath(url));
                     }
-
             }
         }
 

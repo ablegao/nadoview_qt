@@ -145,7 +145,8 @@ int EpubBook::parseEpub() {
         itemObj["media_type"] = item.attribute("media-type");
         m_Manifest << itemObj;
         if (item.attribute("id") == coverName) {
-            coverImg = item.attribute("href");
+            coverImg = QDir::cleanPath(
+                tocBase.absoluteFilePath(item.attribute("href")));
         }
         node = node.nextSibling();
     }
@@ -392,6 +393,15 @@ QByteArray EpubBook::openFileByUrl(const QString &url) {
 }
 
 QString EpubBook::absoluteFilePath(const QString &u) {
+    //
+    //    qDebug() << "current pageurl  " << getCurrentPageUrl();
+    QList<QString> splitArr = getCurrentPageUrl().mid(1).split("/");
+    QList<QString> splitArrU = u.split("/");
+    if (splitArr.size() > 1 && splitArrU.size() > 1 &&
+        splitArrU[0] == splitArr[0]) {
+        return u;
+    }
+
     QFileInfo fileInfo(getCurrentPageUrl());
     if (u.mid(0, 1) != "/") {
         return QDir::cleanPath(fileInfo.dir().absoluteFilePath(u));

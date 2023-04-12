@@ -95,9 +95,24 @@ Q_INVOKABLE QByteArray TableOfContent::openPage(const QString &url) {
     QRegularExpression re("<p(?![^>]*\\bstyle=)[^>]*>");
 
     QString html = mBook->openFileByUrl(url);
-    html.replace(re, "<p style='text-indent: 32px;'>");
+    if (!useMarkDown()) {
+        html.replace(re, "<p style='text-indent: 32px;'>");
+    }
 
-    return html.toUtf8();
+    QRegularExpression re2("<image\\s+(.*?)xlink:href=\"(.*?)\"(.*?)></image>");
+    QString output = html;
+    QRegularExpressionMatchIterator it = re2.globalMatch(html);
+
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        QString attributes = match.captured(1) + match.captured(3);
+        QString src = match.captured(2);
+        QString replacement = "<img " + attributes + " src=\"" + src + "\">";
+        output.replace(match.capturedStart(), match.capturedLength(),
+                       replacement);
+    }
+
+    return output.toUtf8();
 }
 
 Q_INVOKABLE QString TableOfContent::nextPage() { return mBook->nextPage(); }

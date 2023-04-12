@@ -19,7 +19,6 @@ QPixmap MyBookImageSchemeHandler::requestPixmap(const QString &id, QSize *size,
         }
         u = arr[0];
     }
-
     QByteArray data =
         book->mBook->openFileByUrl(book->mBook->absoluteFilePath(u));
 
