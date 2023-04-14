@@ -65,19 +65,11 @@ Window {
         for (var i = 0; i < pathArray.length - 1; i++) {
           directoryPath += pathArray[i] + '/';
         }
-//        console.log("page url ...",url, directoryPath);
         pageView.baseUrl = "image://mybook"+directoryPath;
-//        console.log(tableOfContent.openPage(url));
 
 
         pageView.text = tableOfContent.openPage(url);
-//        else pageView.text = tableOfContent.openPage();
-//        pageView.text = "<p>test01</p><p style='text-indent:20px'>test01</p>"
-
         onstartScrollTo = read.last_read_scroll_number;
-//        console.log(JSON.stringify(out));
-//        tableOfContent.openChapter(0);
-//        console.log("language ............",obj.lang,obj.firstPageUrl);
     }
 
     property var pageRows:[];
@@ -108,9 +100,9 @@ Window {
              id: flick
 
              width: parent.width
-             height:parent.height - webview_btns.height-20
+             height:parent.height - webview_btns.height
              contentWidth: parent.width
-             contentHeight: pageView.contentHeight +40
+             contentHeight: pageView.contentHeight +30
              onWidthChanged: function(){
 //                console.log(flick.width);
                  tableOfContent.setSize(flick.width,flick.height);
@@ -118,28 +110,7 @@ Window {
 //             property int maximumFlickableX: contentWidth - width // 计算滚动的最大值
 //             onContentXChanged: contentX = Math.min(Math.max(0, contentX), maximumFlickableX) // 当滚动超过最大值时，将滚动位置限制在最大值内
              clip: true
-             function getScrollBarPosition(searchString) {
-                 // 获取Flickable中的内容高度和可见高度
-                 var contentHeight = flick.contentHeight
-                 var visibleHeight = flick.height
 
-                 // 获取TextEdit中的文本字符串
-                 var text = pageView.toPlainText();
-
-                 // 使用QFontMetrics测量TextEdit的字体和文本宽度
-                 var fontMetrics = new QFontMetrics(textEdit.font)
-                 var textWidth = fontMetrics.width(text)
-
-                 // 使用QRegularExpression在文本字符串中查找所需的字符串，并计算它在整个字符串中的位置
-                 var re = new QRegularExpression(searchString)
-                 var match = re.match(text)
-                 var position = match.capturedStart()
-
-                 // 使用已知的内容高度、可见高度、文本宽度和字符串位置计算滚动条的位置
-                 var scrollBarPosition = position * (contentHeight - visibleHeight) / (text.length - visibleHeight / fontMetrics.lineSpacing) / textWidth
-
-                 return scrollBarPosition
-            }
             function ensureVisible(r)
             {
                   if (contentX >= r.x)
@@ -159,7 +130,6 @@ Window {
                     x:20
                     y:20
                     width: flick.width-40
-
 
                     textFormat: Text.RichText
                     wrapMode:TextEdit.Wrap
@@ -207,13 +177,22 @@ Window {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-                                pageView.runJavaScript(`
-                                                var selectedText = window.getSelection();
-                                                var range = selectedText.getRangeAt(0);
-                                                var span = document.createElement('span');
-                                                span.style.backgroundColor ="`+modelData+`";
-                                                range.surroundContents(span);
-                                            `);
+                                var start = pageView.selectionStart
+                                var end = pageView.selectionEnd
+                                console.log(start,end);
+                                var extraSelection = {
+                                    "cursor": {"selectionStart": start, "selectionEnd": end},
+                                    "format": {"background": "yellow"}
+                                }
+                                pageView.extraSelections.push(extraSelection)
+                                pageView.extraSelections = pageView.extraSelections;
+//                                pageView.runJavaScript(`
+//                                                var selectedText = window.getSelection();
+//                                                var range = selectedText.getRangeAt(0);
+//                                                var span = document.createElement('span');
+//                                                span.style.backgroundColor ="`+modelData+`";
+//                                                range.surroundContents(span);
+//                                            `);
 //                                        pageView.text
 //                                        console.log("Clicked color:", colorBlock.color)
 //                                        pageView.text= pageView.text.replace(pageView.selectedText,"<span color='"+colorBlock.color+"'>"+pageView.selectedText+"</span>")
