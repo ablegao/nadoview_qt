@@ -8,9 +8,9 @@
 	<string>APPL</string>
 
 	<key>CFBundleName</key>
-	<string>appnadoview</string>
+        <string>NadoView</string>
 	<key>CFBundleIdentifier</key>
-	<string>my.example.com</string>
+        <string>com.tap2happy.nadoview</string>
 	<key>CFBundleExecutable</key>
 	<string>appnadoview</string>
 

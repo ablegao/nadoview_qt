@@ -6,7 +6,7 @@ EpubBook::EpubBook(QObject *parent) {}
 
 EpubBook::~EpubBook() {
     if (m_epub != nullptr) {
-        qDebug() << " book closed";
+//        qDebug() << " book closed";
         m_epub->close();
     }
 }
@@ -31,6 +31,15 @@ EpubBook::~EpubBook() {
 int EpubBook::parseBook(const QString &epubfile) {
     bookPath = epubfile;
     m_epub = new QuaZip(epubfile);
+    if (!m_epub->open(QuaZip::mdUnzip))
+        return -1;
+
+    return parseEpub();
+}
+
+int EpubBook::parseBook(QIODevice *ioDevice) {
+//    bookPath = epubfile;
+    m_epub = new QuaZip(ioDevice);
     if (!m_epub->open(QuaZip::mdUnzip))
         return -1;
 
@@ -94,10 +103,12 @@ int EpubBook::parseEpub() {
             tagname = item.tagName();
             switch (tags.indexOf(tagname)) {
             case 0:
-                this->title = item.text();
+                if (item.text() != "") {
+                    this->title = item.text();
+                }
                 break;
             case 1:
-                qDebug() << " 这里应该是language 标签,  " << tagname;
+//                qDebug() << " 这里应该是language 标签,  " << tagname;
                 this->language = item.text();
                 break;
             case 2:
@@ -134,7 +145,7 @@ int EpubBook::parseEpub() {
     node = manifest.at(0).firstChild();
 
     tocBase = QFileInfo("/" + contentOpfFile).dir();
-    qDebug() << tocBase;
+//    qDebug() << tocBase;
     //  QString contentBase = QFileInfo(contentOpfFile).absolutePath();
     while (!node.isNull()) {
         item = node.toElement();
@@ -223,7 +234,7 @@ void EpubBook::parseTocNcx() {
         }
     }
     ncxFile = QDir::cleanPath(ncxFile);
-    qDebug() << "ncx file" << ncxFile;
+//    qDebug() << "ncx file" << ncxFile;
 
     QuaZipFile openxml(m_epub);
     QDomDocument doc;
@@ -253,7 +264,7 @@ void EpubBook::parseTocNcx() {
         tableOfContent.append(entry);
     }
     doc.clear();
-    qDebug() << "读取完毕";
+//    qDebug() << "读取完毕";
 }
 QString EpubBook::indexToUrl(int index) {
     //    if (index < 0 || index >= tableOfContent.size()) {
@@ -374,14 +385,13 @@ QByteArray EpubBook::openFileByUrl(const QString &url) {
     //             << href;
 
     if (m_epub->setCurrentFile(href) || m_epub->setCurrentFile(href.mid(1)) ||
-        m_epub->setCurrentFile(
-            QDir::cleanPath(tocBase.filePath(href)).mid(1))) {
+         m_epub->setCurrentFile(absoluteFilePath(href))) {
         if (openHtml.open(QIODevice::ReadOnly)) {
             QByteArray data = openHtml.readAll();
             openHtml.close();
             return data;
         } else {
-            qDebug() << "open file errors";
+            qDebug() << "open file errors" << url << bookPath ;
         }
 
         //        openHtml.close();

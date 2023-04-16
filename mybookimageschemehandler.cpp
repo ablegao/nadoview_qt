@@ -9,7 +9,7 @@ QPixmap MyBookImageSchemeHandler::requestPixmap(const QString &id, QSize *size,
     //    QString href = request->requestUrl().url().mid(21);
     //    qDebug() << "REQUEST  : " << request->requestUrl().url() << href;
     QStringList arr = id.split("?");
-    int w = book->screenWidth, h = book->screenHeight;
+    int w = book->screenWidth-80, h = book->screenHeight;
     QString u = id;
     if (arr.size() > 1) {
         QStringList size = arr.last().split("x");
@@ -19,15 +19,20 @@ QPixmap MyBookImageSchemeHandler::requestPixmap(const QString &id, QSize *size,
         }
         u = arr[0];
     }
+    qDebug() << id;
     QByteArray data =
-        book->mBook->openFileByUrl(book->mBook->absoluteFilePath(u));
+        book->mBook->openFileByUrl(u);
 
+    if (data.size() == 0) {
+        return QPixmap();
+    }
     QPixmap img;
     img.loadFromData(data);
     //    qDebug() << img.width();
-
+    qDebug() << w <<  h << img.width() << img.height() << "xxxxxxxxx";
     if (img.width() > w - 40 && w > 0) {
-        img = img.scaled(QSize(w - 40, h - 20), Qt::KeepAspectRatio,
+
+        return img.scaled(QSize(w - 40, h - 20), Qt::KeepAspectRatio,
                          Qt::SmoothTransformation);
     }
     //    qDebug() << data.size() << img.width();

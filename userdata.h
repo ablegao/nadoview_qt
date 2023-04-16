@@ -13,7 +13,11 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStandardPaths>
-
+#include <QBuffer>
+#include <QImage>
+#include <QJsonDocument>
+#include <ebooklib/epubbook.h>
+#include <QImage>
 class UserData : public QObject {
     Q_OBJECT
 public:
@@ -75,7 +79,9 @@ label_postil 字符串 最大2000个字符
     */
     Q_INVOKABLE void read(const QString &bookName, int last_read_index,
                           int last_read_scroll_number);
-
+    Q_INVOKABLE QJsonArray books(int count = 0);
+    Q_INVOKABLE void addBook(const QString &bookPath);
+    Q_INVOKABLE void bookSearch();
 signals:
     void readPageChanged(QJsonArray labeHistory);
 

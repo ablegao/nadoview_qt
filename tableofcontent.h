@@ -27,9 +27,9 @@ public:
     QVariant data(const QModelIndex &index,
                   int role = Qt::DisplayRole) const override;
 
-    Q_INVOKABLE void openChapter(int index);
-    Q_INVOKABLE void openPageByUrl(const QString &url);
-    Q_INVOKABLE void openChapterByUrl(const QString &chapterUrl);
+//    Q_INVOKABLE void openChapter(int index);
+//    Q_INVOKABLE void openPageByUrl(const QString &url);
+//    Q_INVOKABLE void openChapterByUrl(const QString &chapterUrl);
     Q_INVOKABLE void openBook(const QString &bookUri);
     Q_INVOKABLE QString nextPage(); //下一页
     Q_INVOKABLE QString prevPage(); //上一页的URL
@@ -49,8 +49,9 @@ public:
     //    QWebEngineUrlSchemeHandler *urlSchemeHandler();
 signals:
     void bookOpenFinishd(const QVariantMap &bookInfo);
-    void bookChapterReaded(const QVariantMap &info);
-    void openAiDescFinished(const QString &desc);
+    void openPageFinishd(const QString &url,int index);
+//    void bookChapterReaded(const QVariantMap &info);
+//    void openAiDescFinished(const QString &desc);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;

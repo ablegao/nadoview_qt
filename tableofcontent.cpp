@@ -61,16 +61,16 @@ QHash<int, QByteArray> TableOfContent::roleNames() const {
     return roles;
 }
 
-Q_INVOKABLE void TableOfContent::openChapter(int index) {
-    emit bookChapterReaded(mBook->openChapter(mBook->indexToUrl(index)));
-}
+//Q_INVOKABLE void TableOfContent::openChapter(int index) {
+////    emit bookChapterReaded(mBook->openChapter(mBook->indexToUrl(index)));
+//}
 
-Q_INVOKABLE void TableOfContent::openPageByUrl(const QString &url) {
-    emit bookChapterReaded(mBook->openChapter(url));
-}
-Q_INVOKABLE void TableOfContent::openChapterByUrl(const QString &url) {
-    //    emit bookChapterReaded(mBook->openChapter(index));
-}
+//Q_INVOKABLE void TableOfContent::openPageByUrl(const QString &url) {
+////    emit bookChapterReaded(mBook->openChapter(url));
+//}
+//Q_INVOKABLE void TableOfContent::openChapterByUrl(const QString &url) {
+//    //    emit bookChapterReaded(mBook->openChapter(index));
+//}
 Q_INVOKABLE void TableOfContent::openBook(const QString &bookUri) {
     mBook = new EpubBook();
     int status = mBook->parseBook(bookUri);
@@ -78,7 +78,7 @@ Q_INVOKABLE void TableOfContent::openBook(const QString &bookUri) {
         qDebug() << "file open finished";
         emit layoutChanged();
         QVariantMap info = {
-            {"name", mBook->title},
+            {"book_name", mBook->title},
             {"lang", mBook->language},
             {"coverImg", mBook->coverImg},
             {"firstPageUrl", mBook->getFirstPageUrl()},
@@ -98,25 +98,29 @@ Q_INVOKABLE QByteArray TableOfContent::openPage(const QString &url) {
     if (!useMarkDown()) {
         html.replace(re, "<p style='text-indent: 32px;'>");
     }
-
-    QRegularExpression re2("<image\\s+(.*?)xlink:href=\"(.*?)\"(.*?)></image>");
     QString output = html;
-    QRegularExpressionMatchIterator it = re2.globalMatch(html);
-
+    QRegularExpression reg("<image .* xlink:href=\"(.*?)\" .* ?(/>|>.*?</image>)");
+    QRegularExpressionMatchIterator it = reg.globalMatch(html);
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
-        QString attributes = match.captured(1) + match.captured(3);
-        QString src = match.captured(2);
-        QString replacement = "<img " + attributes + " src=\"" + src + "\">";
-        output.replace(match.capturedStart(), match.capturedLength(),
-                       replacement);
+        //        QString attributes = match.captured(1) + match.captured(3);
+        QString src = match.captured(1);
+        QString replacement = "<img src=\"" + src + "\">";
+        output.replace(match.capturedStart(), match.capturedLength(), replacement);
     }
-
+    emit openPageFinishd(url,mBook->readIndex());
+//    qDebug() << "" << output;
     return output.toUtf8();
 }
 
-Q_INVOKABLE QString TableOfContent::nextPage() { return mBook->nextPage(); }
-Q_INVOKABLE QString TableOfContent::prevPage() { return mBook->prevPage(); }
+Q_INVOKABLE QString TableOfContent::nextPage() {
+    if(mBook!=nullptr ) return mBook->nextPage();
+    else return "";
+}
+Q_INVOKABLE QString TableOfContent::prevPage() {
+    if(mBook!=nullptr ) return mBook->prevPage();
+    else return "";
+}
 Q_INVOKABLE QString TableOfContent::markdownToHtml(const QString &markdown,
                                                    int fontSize, int w, int h) {
     QString blockHtml = markdown;

@@ -2,6 +2,9 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 //import QtNetwork
 import NadoView 1.0
+//import QtQuick.Effects
+import Qt5Compat.GraphicalEffects
+
 //import QtWebView 1.1
 
 
@@ -18,7 +21,10 @@ Window {
     property string pageHref:"";
     property string pageDesc:"";
     property  string bookName: ""
+//    property  string bookUrl: ""
+    property  int  pageIndex: 0;
     property int onstartScrollTo: 0
+//    property var books : userdata.books()
     UserData{
         id:userdata
     }
@@ -40,8 +46,8 @@ Window {
     //:/
 
     function bookOpenFinishd(obj){
-        root.title = "Currently using NadoView 0.1 to read《" + obj.name + "》";
-        root.bookName = obj.name;
+        root.title = "Currently using NadoView 0.1 to read《" + obj.book_name + "》";
+        root.bookName = obj.book_name;
         root.lang = obj.lang;
         var source = "image://mybook/"+obj.coverImg+"?180x240";
 //        console.log("image......",obj.firstPageUrl,source);
@@ -53,8 +59,8 @@ Window {
 //        }
         tableOfContent.setSize(flick.width,flick.height);
         tocListView.currentIndex = 0;
-        var read = userdata.openBook(obj.name);
-        console.log(JSON.stringify(read));
+        var read = userdata.openBook(obj.book_name);
+        console.log("========= open book",JSON.stringify(read));
 //        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
 //        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
         var url  = obj.firstPageUrl;
@@ -70,20 +76,27 @@ Window {
 
         pageView.text = tableOfContent.openPage(url);
         onstartScrollTo = read.last_read_scroll_number;
+        flick.contentY = onstartScrollTo;
     }
 
     property var pageRows:[];
-    function bookChapterReaded(obj){
-//        root.pageHref = obj.href;
-//        pageView.loadHtml(obj.html,"mbook://book.local/");
-//        root.pageDesc = obj.desc;
+    function bookChapterReaded(obj,index){
+        root.pageIndex=index;
+        userdata.read(root.bookName,index,0);
 
     }
     Component.onCompleted: function(){
-        console.log("BOOK address:",bookUrl);
+        console.log("BOOK address:",root.bookUrl);
+        var books = userdata.books(1);
+//        book_list_grid.model = books;
         tableOfContent.onBookOpenFinishd.connect(bookOpenFinishd);
-        tableOfContent.onBookChapterReaded.connect(bookChapterReaded);
-        if(bookUrl!="") tableOfContent.openBook(bookUrl);
+        tableOfContent.onOpenPageFinishd.connect(bookChapterReaded);
+        if(bookUrl!=""){
+
+            tableOfContent.openBook(bookUrl);
+            userdata.addBook(bookPath);
+        }
+        else tableOfContent.openBook(books[0].book_url);
 
     }
 
@@ -110,7 +123,10 @@ Window {
 //             property int maximumFlickableX: contentWidth - width // 计算滚动的最大值
 //             onContentXChanged: contentX = Math.min(Math.max(0, contentX), maximumFlickableX) // 当滚动超过最大值时，将滚动位置限制在最大值内
              clip: true
-
+            onMovementEnded:function(){
+//                console.log("scroll move.",flick.contentY);
+                userdata.read(root.bookName,root.pageIndex,flick.contentY);
+            }
             function ensureVisible(r)
             {
                   if (contentX >= r.x)
@@ -316,14 +332,149 @@ Window {
                         }
                     }
                 }
+
+                Text {
+                    width: parent.cellHeight
+                    height: parent.cellHeight
+//                            radius: 2
+                    font.pixelSize: parent.cellHeight
+                    text:''
+
+//                            border.width:1
+                    font.family: iconFont.name
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked:function() {
+                            bookLists.open();
+                            sync_open_load.start();
+                        }
+                    }
+                }
             }
         }
     }
 
 
+    Popup {
+        id: bookLists
+        modal: true
+        focus: true
+
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width:root.width
+        height:root.height - webview_btns.height
+        Rectangle {
+                    anchors.fill: parent
+                    color: "#fffffe"
+                    radius: 10
+        }
+        Text {
+            id:bookLists_Loading
+            text:"loading...."
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+            anchors.fill: parent
+
+        }
+        onClosed: function(){
+            bookLists_Loading.visible=false;
+        }
+        onOpened: function(){
+            bookLists_Loading.visible=true;
+        }
+        Loader {
+                id: bookListLoader
+                anchors.fill: parent
+                active: false
+                asynchronous: true
+                visible: status == Loader.Ready
+                sourceComponent: bookListComponent
+                onLoaded: function(){
+                    bookLists_Loading.visible=false;
+                }
+        }
+//        onOpened:  {
+//                sync_open_load.start();
+////                bookListLoader.sourceComponent = bookListComponent
+////                bookLists.contentItem = bookListLoader.item // 设置Popup内容为加载的GridView
+////            bookListLoader.setSource(bookListComponent)
+
+////            console.log("=----------");
+//        }
+        Timer {
+            id:sync_open_load
+            interval: 10
+            repeat: false
+            running: false
+            onTriggered: function(){
+                bookListLoader.active = false  // 关闭Loader
+                bookListLoader.active = true   // 重新加载,获取最新数据模型
+            }
+        }
+
+        Component {
+            id:bookListComponent
+
+            GridView {
+               id:book_list_grid
+               anchors.fill: parent
+               cellWidth: 124
+               cellHeight: 220
+               clip:true
 
 
+               model:userdata.books()
 
+               delegate: Rectangle {
+                    width:book_list_grid.cellWidth
+                    height:book_list_grid.cellHeight
+                    anchors.margins: 4
+                    color:"#fffffe"
+    //                DropShadow {
+    //                   anchors.fill: parent
+    //                   radius: 8.0
+    //                   samples: 17
+    //                   color: "#80000000"
+    //                   horizontalOffset: 3
+    //                   verticalOffset: 3
+    //                   spread: 0
+    //               }
+                   Column{
+                        Image {
+                            id:book_icon
+                            width: book_list_grid.cellWidth-4
+                            height: 180
+                            asynchronous:true
+                            visible: modelData.book_image.length>0?true:false
+                            source: visible?"data:image/png;base64,"+modelData.book_image:""  // 模拟图片源
+
+                        }
+                        Text {
+                            id:title_icon
+                            text:modelData.book_name
+                            elide: Text.ElideRight
+                            width:book_icon.width
+                            height:book_icon.visible?book_list_grid.cellHeight-book_icon.height:book_list_grid.cellHeight
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode :Text.Wrap
+                            color:"#272343" // book_icon.visible? :"#e3f6f5"
+//                            background:book_icon.visible?"":"#e3f6f5"
+                            anchors.margins: 2
+                        }
+                    }
+                   MouseArea {
+                    anchors.fill: parent
+                    onClicked: function(){
+    //                    console.log(modelData.book_name);
+                        tableOfContent.openBook(modelData.book_url);
+                        bookLists.close();
+                    }
+                   }
+                }
+            }
+        }
+    }
 
     Popup{
         id:leftBox
@@ -502,6 +653,7 @@ Window {
                     }
                     ComboBox{
                         id:openai_mode_names
+                        height: parent.cellHeight
                         model: ListModel {
                             ListElement { text: "gpt-3.5-turbo" }
                             ListElement { text: "gpt-3.5" }

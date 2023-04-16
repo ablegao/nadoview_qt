@@ -39,6 +39,7 @@ public:
 
     // 打开书籍
     Q_INVOKABLE int parseBook(const QString &epudfile = "") override;
+    Q_INVOKABLE int parseBook(QIODevice *ioDevice) override;
     Q_INVOKABLE QVariantMap openChapter(const QString &url) override;
     Q_INVOKABLE QByteArray openFileByUrl(const QString &index) override;
     Q_INVOKABLE QString getFirstPageUrl() override;

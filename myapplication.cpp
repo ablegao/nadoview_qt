@@ -11,7 +11,7 @@ bool MyApplication::event(QEvent *event) {
 
         // Handle the file open request here
         // For example, open the file in your application
-        emit FileOpend(fileName);
+        emit fileOpend(fileName);
         return false;
     }
 

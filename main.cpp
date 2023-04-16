@@ -13,6 +13,13 @@
 #include "userdata.h"
 #include <QLocale>
 #include <QTranslator>
+#include <QDebug>
+
+//#ifdef Q_OS_ANDROID
+//#include <QJniObject>
+//#endif
+
+
 int main(int argc, char *argv[]) {
 
     //    QtWebEngineQuick::initialize();
@@ -39,6 +46,65 @@ int main(int argc, char *argv[]) {
     //    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler("mybook",
     //                                                                 &scheme);
 
+//#ifdef Q_OS_ANDROID
+
+//    QJniObject activity = QJniObject::callStaticObjectMethod("org/qtproject/qt/android/QtNative",
+//                                                             "activity",
+//                                                             "()Landroid/app/Activity;");
+//    QJniObject intent = activity.callObjectMethod("getIntent", "()Landroid/content/Intent;");
+//    QJniObject action = intent.callObjectMethod("getAction", "()Ljava/lang/String;");
+////    QJniObject contentResolver = activity.callObjectMethod("getContentResolver",
+////                                                           "()Landroid/content/ContentResolver;");
+
+//    if (action.toString() == "android.intent.action.VIEW") {
+//        QJniObject data = intent.callObjectMethod("getData", "()Landroid/net/Uri;");
+//        if (data.isValid()) {
+//            // 获取文件路径
+//            //            QJniObject data = data.callObjectMethod("getPath", "()Ljava/lang/String;");
+//            //            QJniObject outobj = filePath.object();
+//            QJniObject contentResolver
+//                = activity.callObjectMethod("getContentResolver",
+//                                            "()Landroid/content/ContentResolver;");
+//            QJniObject inputStream
+//                = contentResolver.callObjectMethod("openInputStream",
+//                                                   "(Landroid/net/Uri;)Ljava/io/InputStream;",
+//                                                   data.object());
+
+////            jint fd = inputStream.callMethod<jint>("readAllBytes", "()I");
+////            qDebug()  << "stream id :" << fd;
+
+////            qDebug() << "get a file..." << filePath.toString();
+////            jint fd = QJniObject::callStaticMethod<jint>("android/content/ContentResolver",
+////                                                                "openFileDescriptor",
+////                                                                "(Landroid/net/Uri;Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;",
+////                                                                filePath.object(),
+////                                                                "r");
+////            qDebug() << "GET ID:"  << fd;
+
+////            QJniObject parcelFileDescriptor = contentResolver.callObjectMethod(
+////                "openFileDescriptor",
+////                "(Landroid/net/Uri;Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;",
+////                data.object(),
+////                "r");
+////            jint fd = parcelFileDescriptor.callMethod<jint>("getFd");
+
+////            QJniObject os = QJniObject::callStaticObjectMethod(
+////                "android/system/Os",
+////                "open",
+////                "(Ljava/lang/String;I)Ljava/io/FileDescriptor;",
+////                "/proc/self/fd",
+////                fd);
+////            QJniObject realPath = os.callObjectMethod("readlink", "()Ljava/lang/String;");
+////            QString path = realPath.toString();
+////            qDebug() << path << "old..........";
+
+//        }
+//    }
+
+//#endif
+
+
+
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages) {
@@ -49,6 +115,7 @@ int main(int argc, char *argv[]) {
         }
     }
     QStringList args = QCoreApplication::arguments();
+    qDebug() << "ARGS....." << args;
 
     //    qmlRegisterType<TableOfContent>("NadoView", 1, 0,
     //    "TableOfContentModel");
@@ -62,8 +129,11 @@ int main(int argc, char *argv[]) {
     engine.addImageProvider(QLatin1String("mybook"), scheme);
 
     QQmlContext *context = engine.rootContext();
+    qDebug() << args;
     if (args.size() > 1) {
         context->setContextProperty("bookUrl", args[1]);
+        qDebug() << "============ " << args[1];
+//        book.openBook(args[1]);
     } else {
         context->setContextProperty("bookUrl", "");
     }
@@ -83,7 +153,7 @@ int main(int argc, char *argv[]) {
     engine.load(url);
 
     // 链接文件打开事件
-    QObject::connect(&app, &MyApplication::FileOpend, &book,
+    QObject::connect(&app, &MyApplication::fileOpend, &book,
                      &TableOfContent::openBook);
 
     return app.exec();

@@ -9,7 +9,7 @@ class MyApplication : public QGuiApplication {
 public:
     MyApplication(int &argc, char **argv);
 signals:
-    void FileOpend(const QString &path);
+    void fileOpend(const QString &path);
 
 protected:
     bool event(QEvent *event) override;
