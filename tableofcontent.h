@@ -7,6 +7,10 @@
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QRegularExpression>
+#include <QPainter>
+#include <QFont>
+#include <QImage>
+
 
 //#include <QWebEngineProfile>
 #include <qnetworkaccessmanager.h>
@@ -45,7 +49,7 @@ public:
     Q_INVOKABLE void setSize(int w, int h);
 
     Q_INVOKABLE QString absoluteFilePath(const QString &u);
-
+    Q_INVOKABLE void shareToImage(const QString &text, const QString &bookName, const QString &outdir, int fontSize=16);
     //    QWebEngineUrlSchemeHandler *urlSchemeHandler();
 signals:
     void bookOpenFinishd(const QVariantMap &bookInfo);

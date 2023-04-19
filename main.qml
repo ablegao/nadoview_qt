@@ -140,26 +140,27 @@ Window {
             }
 
             TextEdit {
-                    id:pageView
+                id:pageView
 //                    width: flick.width-20
 //                    x:10
-                    x:20
-                    y:20
-                    width: flick.width-40
+                x:20
+                y:20
+                width: flick.width-40
 
-                    textFormat: Text.RichText
-                    wrapMode:TextEdit.Wrap
-                    readOnly: true
-                    selectByMouse: true
-                    focus: true
+                textFormat: Text.RichText
+                wrapMode:TextEdit.Wrap
+                readOnly: true
+                selectByMouse: true
+                focus: true
 //                    baseUrl: "image://mybook/"
-                    font.pixelSize: 16
+                font.pixelSize: 16
 
-                    onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
-                    onLinkActivated:function(url){
+                onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
+                onLinkActivated:function(url){
 //                        console.log();
-                        pageView.text = tableOfContent.openPage(tableOfContent.absoluteFilePath(url));
-                    }
+                    pageView.text = tableOfContent.openPage(tableOfContent.absoluteFilePath(url));
+                }
+
             }
         }
 
@@ -312,6 +313,26 @@ Window {
                 }
 
                 Text {
+                    id:share_text
+                    width: parent.cellHeight
+                    height: parent.cellHeight
+                    font.pixelSize: parent.cellHeight
+                    text:''
+                    font.family: iconFont.name
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked:function() {
+                            console.log(pageView.selectedText);
+//                            tableOfContent.shareToImage(pageView.selectedText,root.bookName,16,"/Users/ablegao/code/andctrol/share.jpg");
+                            painterBox_text.text = pageView.selectedText;
+
+                            painterBox.open();
+                        }
+                    }
+                }
+
+
+                Text {
                     width: parent.cellHeight
                     height: parent.cellHeight
 //                            radius: 2
@@ -353,13 +374,23 @@ Window {
             }
         }
     }
-
+    Popup {
+        id: painterBox
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width:220
+//        QQuickPaintedItem {
+            Text{
+                id:painterBox_text
+            }
+//        }
+    }
 
     Popup {
         id: bookLists
         modal: true
         focus: true
-
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         width:root.width
         height:root.height - webview_btns.height
@@ -418,8 +449,8 @@ Window {
             GridView {
                id:book_list_grid
                anchors.fill: parent
-               cellWidth: 124
-               cellHeight: 220
+               cellWidth: 180
+               cellHeight: 320
                clip:true
 
 
@@ -443,7 +474,8 @@ Window {
                         Image {
                             id:book_icon
                             width: book_list_grid.cellWidth-4
-                            height: 180
+                            height: width/0.704
+                            fillMode: Image.PreserveAspectFit
                             asynchronous:true
                             visible: modelData.book_image.length>0?true:false
                             source: visible?"data:image/png;base64,"+modelData.book_image:""  // 模拟图片源

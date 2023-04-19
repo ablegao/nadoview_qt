@@ -2,18 +2,17 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
-//#include <QtWebEngineQuick>
+#include <QLocale>
+#include <QTranslator>
+#include <QDebug>
 
-//#include "customurlschemehandler.h"
 #include "myapplication.h"
 #include "mybookimageschemehandler.h"
 #include "networkmanager.h"
 #include "openchatmodel.h"
 #include "tableofcontent.h"
 #include "userdata.h"
-#include <QLocale>
-#include <QTranslator>
-#include <QDebug>
+//#include "painterimage.h"
 
 //#ifdef Q_OS_ANDROID
 //#include <QJniObject>
@@ -124,6 +123,7 @@ int main(int argc, char *argv[]) {
     // open chat model 注册
     qmlRegisterType<OpenChatModel>("NadoView", 1, 0, "OpenChatModel");
     qmlRegisterType<NetworkManager>("NadoView", 1, 0, "NetworkManager");
+//    qmlRegisterType<PainterImage>("NadoView", 1, 0, "PainterImage");
     // 初始化引擎
     QQmlApplicationEngine engine;
     engine.addImageProvider(QLatin1String("mybook"), scheme);

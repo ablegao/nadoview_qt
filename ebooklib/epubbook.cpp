@@ -316,6 +316,9 @@ QString EpubBook::prevPage() {
 }
 
 QString EpubBook::getCurrentPageUrl() {
+    if (mSpineIndex < 0 || mSpineIndex >= m_Spine.size()) {
+        return "";
+    }
     QVariantMap item = m_Spine.at(mSpineIndex).toVariantMap();
     for (int i = 0; i < m_Manifest.size(); i++) {
         if (item["idref"].toString() ==
