@@ -12,9 +12,35 @@
 //                                       "Chapter03"}},
 //                                   }) {}
 
-TableOfContent::TableOfContent(QObject *parent) : QAbstractListModel(parent) {}
+TableOfContent::TableOfContent(QObject *parent)
+    : QAbstractListModel(parent)
+{
+    server = new QHttpServer();
+    server->listen(QHostAddress::LocalHost);
+    server->route("/(.*)", std::function<QByteArray(const QHttpServerRequest&)>([this](const QHttpServerRequest &request){
+          return handleRequest(request);
+      }));
+
+//    qDebug() << "Server :" << hosts();
+
+
+}
 TableOfContent::~TableOfContent() { mBook = nullptr; }
 
+QString TableOfContent::hosts()
+{
+    return QString("http://localhost:%1").arg(server->serverPorts()[0]);
+}
+
+QByteArray TableOfContent::handleRequest(const QHttpServerRequest &request)
+{
+    if (mBook != nullptr) {
+        return mBook->openFileByUrl(request.url().path());
+    }
+
+    return "NONE";
+
+}
 QVariant TableOfContent::data(const QModelIndex &index, int role) const {
     if (!index.isValid()) {
         return QVariant();

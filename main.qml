@@ -5,7 +5,7 @@ import NadoView 1.0
 //import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
 
-//import QtWebView 1.1
+import QtWebView 1.1
 
 
 Window {
@@ -57,7 +57,7 @@ Window {
 //        if(tableOfContent.useMarkDown()){
 //            pageView.textFormat = Text.MarkdownText;
 //        }
-        tableOfContent.setSize(flick.width,flick.height);
+        tableOfContent.setSize(pageView.width,pageView.height);
         tocListView.currentIndex = 0;
         var read = userdata.openBook(obj.book_name);
         console.log("========= open book",JSON.stringify(read));
@@ -71,12 +71,13 @@ Window {
         for (var i = 0; i < pathArray.length - 1; i++) {
           directoryPath += pathArray[i] + '/';
         }
-        pageView.baseUrl = "image://mybook"+directoryPath;
+//        pageView.baseUrl = "image://mybook"+directoryPath;
 
 
-        pageView.text = tableOfContent.openPage(url);
+//        pageView.text = tableOfContent.openPage(url);
+        pageView.url = tableOfContent.hosts()+ url;
         onstartScrollTo = read.last_read_scroll_number;
-        flick.contentY = onstartScrollTo;
+//        flick.contentY = onstartScrollTo;
     }
 
     property var pageRows:[];
@@ -109,66 +110,38 @@ Window {
         NetworkManager {
             id:network_access_manager
         }
-        Flickable {
-             id: flick
 
-             width: parent.width
-             height:parent.height - webview_btns.height
-             contentWidth: parent.width
-             contentHeight: pageView.contentHeight +30
-             onWidthChanged: function(){
-//                console.log(flick.width);
-                 tableOfContent.setSize(flick.width,flick.height);
-             }
-//             property int maximumFlickableX: contentWidth - width // 计算滚动的最大值
-//             onContentXChanged: contentX = Math.min(Math.max(0, contentX), maximumFlickableX) // 当滚动超过最大值时，将滚动位置限制在最大值内
-             clip: true
-            onMovementEnded:function(){
-//                console.log("scroll move.",flick.contentY);
-                userdata.read(root.bookName,root.pageIndex,flick.contentY);
-            }
-            function ensureVisible(r)
-            {
-                  if (contentX >= r.x)
-                      contentX = r.x;
-                  else if (contentX+width <= r.x+r.width)
-                      contentX = r.x+r.width-width;
-                  if (contentY >= r.y)
-                      contentY = r.y;
-                  else if (contentY+height <= r.y+r.height)
-                      contentY = r.y+r.height-height;
-            }
-
-            TextEdit {
-                id:pageView
+        WebView {
+            id:pageView
 //                    width: flick.width-20
 //                    x:10
-                x:20
-                y:20
-                width: flick.width-40
-
-                textFormat: Text.RichText
-                wrapMode:TextEdit.Wrap
-                readOnly: true
-                selectByMouse: true
-                focus: true
-//                    baseUrl: "image://mybook/"
-                font.pixelSize: 16
-
-                onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
-                onLinkActivated:function(url){
-//                        console.log();
-                    pageView.text = tableOfContent.openPage(tableOfContent.absoluteFilePath(url));
+            x:0
+            y:0
+            width: parent.width
+            height: parent.height -webview_btns.height
+            onLoadingChanged:function(event){
+                if(event.status!=2){
+                    return;
                 }
 
+                pageView.runJavaScript("document.body.style.margin='20px';");
+                pageView.runJavaScript("document.body.style.textIndent='2em';");
+                pageView.runJavaScript(`
+                                       var images = document.querySelectorAll('img');
+                                       Array.prototype.forEach.call(images, function(image) {
+                                         image.style.maxWidth = '90%';
+                                       });
+                                       `);
             }
+
         }
+
 
         Rectangle{
             color:"#bae8e8"
             id:webview_btns
             width:parent.width
-            anchors.top: flick.bottom
+            anchors.top: pageView.bottom
             height:35
 //                    border.width: 1
 
@@ -285,7 +258,7 @@ Window {
                         onClicked: function(){
                              // 上一页
                            var u = tableOfContent.prevPage();
-                            if(u!=="") pageView.text =tableOfContent.openPage(u);
+                            if(u!=="") pageView.url =tableOfContent.hosts()+u;
                         }
                     }
                 }
@@ -306,7 +279,7 @@ Window {
                            // 下一页
                             var u= tableOfContent.nextPage();
                             if(u!=="")
-                            pageView.text =tableOfContent.openPage(u);
+                            pageView.url =tableOfContent.hosts()+u;
                             root.onstartScrollTo = 0;
                         }
                     }
@@ -565,7 +538,7 @@ Window {
 
                             tocListView.currentIndex = index;
 //                            pageView.url = "mybook://book.local"+chapterUrl;
-                            pageView.text = tableOfContent.openPage(chapterUrl);
+                            pageView.url = tableOfContent.hosts()+chapterUrl;
                             console.log(chapterUrl);
 
                         }

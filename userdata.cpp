@@ -10,7 +10,7 @@ UserData::UserData(QObject *parent) : QObject{parent} {
     //    homeDir(userDir);
     dataFile = userDir.absoluteFilePath("mybook.sqlite3");
 
-    qDebug() << dataFile;
+    qDebug() << "data file:::" << dataFile;
     if (!QFile::exists(dataFile)) {
         qDebug() << "初始化文件";
 
@@ -84,19 +84,20 @@ UserData::UserData(QObject *parent) : QObject{parent} {
         // 如果settings表为空,初始化数据
         if (!query.next()) {
             query.prepare("INSERT INTO settings (json_settings) VALUES (:data)");
-            QJsonObject obj{{"book_dirs", QJsonArray{QDir::homePath()+"/Books"}}, {"font_size", 16}};
+            QJsonObject obj{{"book_dirs", QJsonArray{QDir::homePath()+"/Books","/storage/emulated/0/Download"}}, {"font_size", 16}};
             query.bindValue(":data", QJsonDocument(obj).toJson());
             if (!query.exec()) {
                 qDebug() << "Failed to init settings:" << query.lastError().text();
                 return;
             }
         }
-        bookSearch();
+
     } else {
         // 读取数据库文件
         QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
         db.setDatabaseName(dataFile);
     }
+    bookSearch();
 
 }
 
@@ -349,6 +350,7 @@ void UserData::bookSearch()
         return;
     }
 
+
     if (query.next()) {
         QJsonDocument doc = QJsonDocument::fromJson(query.value(0).toString().toUtf8());
         QJsonObject obj = doc.object();
@@ -378,4 +380,28 @@ void UserData::bookSearch()
             }
         }
     }
+}
+
+
+bool UserData::checkPermission(const QString &permission)
+{
+#ifdef Q_OS_ANDROID
+    auto result = QtAndroidPrivate::checkPermission(permission);
+
+    return result.result() != QtAndroidPrivate::Denied;
+#endif
+    return true;
+}
+
+bool UserData::requestPermission(const QString &permission)
+{
+#ifdef Q_OS_ANDROID
+    auto result = QtAndroidPrivate::requestPermission(permission);
+//                      .then([](QtAndroidPrivate::PermissionResult result) { return result; });
+//    result.waitForFinished();
+    auto out = result.result();
+    qDebug() << "request out .:::::" << out ;
+    return out != QtAndroidPrivate::Denied;
+#endif
+    return true;
 }

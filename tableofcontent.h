@@ -10,6 +10,10 @@
 #include <QPainter>
 #include <QFont>
 #include <QImage>
+#include <QHttpServer>
+#include <QHttpServerRequest>
+#include <QHttpServerResponse>
+
 
 
 //#include <QWebEngineProfile>
@@ -24,6 +28,7 @@ public:
         ChapterUrl,
         ChapterLevel,
     };
+    QHttpServer *server;
     explicit TableOfContent(QObject *parent = nullptr);
     ~TableOfContent();
     IBook *mBook = nullptr;
@@ -50,6 +55,8 @@ public:
 
     Q_INVOKABLE QString absoluteFilePath(const QString &u);
     Q_INVOKABLE void shareToImage(const QString &text, const QString &bookName, const QString &outdir, int fontSize=16);
+    Q_INVOKABLE QString hosts();
+    QByteArray handleRequest(const QHttpServerRequest &request);
     //    QWebEngineUrlSchemeHandler *urlSchemeHandler();
 signals:
     void bookOpenFinishd(const QVariantMap &bookInfo);

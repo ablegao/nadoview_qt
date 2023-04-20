@@ -18,7 +18,7 @@ set_source_files_properties(${app_icon_macos} PROPERTIES
 
 
 add_subdirectory(quazip)
-find_package(Qt6 6.5.0 COMPONENTS Core WebView QuickControls2 Widgets QuickControls2Impl Sql GUI Quick xml REQUIRED)
+find_package(Qt6 6.5.0 COMPONENTS Core WebView HttpServer QuickControls2 Widgets QuickControls2Impl Sql GUI Quick xml REQUIRED)
 qt_add_resources(RESOURCE_FILES res.qrc)
 
 qt_add_executable(appnadoview
@@ -41,6 +41,7 @@ qt_add_executable(appnadoview
     mybookimageschemehandler.cpp
     networkmanager.h
     networkmanager.cpp
+
 #    customurlschemehandler.h
 #    customurlschemehandler.cpp
     ebooklib/epubbook.h
@@ -74,7 +75,7 @@ set_property(TARGET appnadoview APPEND PROPERTY
        )
 
 target_link_libraries(appnadoview
-    PRIVATE Qt6::Core Qt6::CorePrivate Qt6::QuickControls2 Qt6::QuickControls2Impl Qt6::Widgets Qt6::Sql Qt6::Gui  Qt6::Quick Qt6::Xml  QuaZip::QuaZip)
+    PRIVATE Qt6::Core Qt6::CorePrivate Qt6::WebView Qt6::HttpServer Qt6::QuickControls2 Qt6::QuickControls2Impl Qt6::Widgets Qt6::Sql Qt6::Gui  Qt6::Quick Qt6::Xml  QuaZip::QuaZip)
 
 install(TARGETS appnadoview
     BUNDLE DESTINATION .

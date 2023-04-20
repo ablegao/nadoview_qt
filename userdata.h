@@ -16,8 +16,17 @@
 #include <QBuffer>
 #include <QImage>
 #include <QJsonDocument>
-#include <ebooklib/epubbook.h>
 #include <QImage>
+#include <ebooklib/epubbook.h>
+
+
+
+#ifdef  Q_OS_ANDROID
+#include <QtCore/private/qandroidextras_p.h>
+
+#endif
+
+
 class UserData : public QObject {
     Q_OBJECT
 public:
@@ -82,6 +91,8 @@ label_postil 字符串 最大2000个字符
     Q_INVOKABLE QJsonArray books(int count = 0);
     Q_INVOKABLE void addBook(const QString &bookPath);
     Q_INVOKABLE void bookSearch();
+    Q_INVOKABLE bool checkPermission(const QString &permission);
+    Q_INVOKABLE bool requestPermission(const QString &permission);
 signals:
     void readPageChanged(QJsonArray labeHistory);
 
