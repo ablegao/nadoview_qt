@@ -91,13 +91,13 @@ UserData::UserData(QObject *parent) : QObject{parent} {
                 return;
             }
         }
-
+        bookSearch();
     } else {
         // 读取数据库文件
         QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
         db.setDatabaseName(dataFile);
     }
-    bookSearch();
+
 
 }
 
@@ -377,6 +377,15 @@ void UserData::bookSearch()
                 QString bookUrl = directory.absoluteFilePath(f);
                 addBook(bookUrl);
             // 对文本文件进行进一步处理,存入book_list表等
+            }
+            QStringList subDirs = directory.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+            for (const QString &subDir : subDirs) {
+                QDir subDirPath = directory.absoluteFilePath(subDir);
+                QStringList subFiles = subDirPath.entryList(filter, QDir::Files);
+                for (const QString &f : files) {
+                    QString bookUrl = subDirPath.absoluteFilePath(f);
+                    addBook(bookUrl);
+                }
             }
         }
     }
