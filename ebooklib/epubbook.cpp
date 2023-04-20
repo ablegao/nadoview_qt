@@ -176,13 +176,13 @@ int EpubBook::parseEpub() {
 
     doc.clear();
 
-    if (version == "2.0") {
-        parseTocNcx();
-    } else if (version == "3.0") {
-        parseNavXHtml();
-    } else {
-        qDebug() << "不知道什么版本。无法解析这个epub" << version;
-    }
+//    if (version == "2.0") {
+    parseTocNcx();
+//    } else if (version == "3.0") {
+    parseNavXHtml();
+//    } else {
+//        qDebug() << "不知道什么版本。无法解析这个epub" << version;
+//    }
 
     return 0;
 }
@@ -197,18 +197,14 @@ void EpubBook::parseNavXHtml() {
             break;
         }
     }
-    navFile = QDir::cleanPath(navFile);
-    QuaZipFile openxml(m_epub);
+    if (navFile == "")
+        return;
+
     QDomDocument doc;
-    doc.setContent(openFileByUrl(navFile));
+    doc.setContent(openFileByUrl(tocBase.absoluteFilePath(navFile)));
+
     QDomNodeList navPoints = doc.elementsByTagName("a");
     tableOfContent.clear();
-
-    //    QVariantMap entry;
-    //    entry["chapterName"] =
-    //        "<img src='image://mybook/" + coverImg + "200x200'   >";
-    //    entry["chapterUrl"] = "";
-    //    entry["chapterLevel"] = 0;
 
     for (int i = 0; i < navPoints.size(); i++) {
         QDomElement navPoint = navPoints.at(i).toElement();
@@ -217,7 +213,6 @@ void EpubBook::parseNavXHtml() {
         QVariantMap entry;
         entry["chapterName"] = label;
         entry["chapterUrl"] = QDir::cleanPath(tocBase.filePath(href));
-        ;
         entry["chapterLevel"] = 0;
         tableOfContent.append(entry);
     }
@@ -233,24 +228,22 @@ void EpubBook::parseTocNcx() {
             break;
         }
     }
-    ncxFile = QDir::cleanPath(ncxFile);
-//    qDebug() << "ncx file" << ncxFile;
+    if (ncxFile == "")
+        return;
+//    ncxFile = QDir::cleanPath(ncxFile);
+    qDebug() << "ncx file" << ncxFile;
 
-    QuaZipFile openxml(m_epub);
+//    QuaZipFile openxml(m_epub);
     QDomDocument doc;
-    doc.setContent(openFileByUrl(ncxFile));
+    doc.setContent(openFileByUrl(tocBase.absoluteFilePath(ncxFile)));
 
-    QDomNodeList navPoints = doc.elementsByTagName("navPoint");
+    QDomNodeList tocPoints = doc.elementsByTagName("navPoint");
     tableOfContent.clear();
+    qDebug() << "table of content size..........." << tocPoints.size();
     // 插入图书icon
-    //    QVariantMap entry;
-    //    entry["chapterName"] =
-    //        "<img src='image://mybook/" + coverImg + "?200x200' >";
-    //    entry["chapterUrl"] = "";
-    //    entry["chapterLevel"] = 0;
-    //    tableOfContent.append(entry);
-    for (int i = 0; i < navPoints.size(); ++i) {
-        QDomElement navPoint = navPoints.at(i).toElement();
+
+    for (int i = 0; i < tocPoints.size(); ++i) {
+        QDomElement navPoint = tocPoints.at(i).toElement();
 
         QString label = navPoint.firstChildElement("navLabel")
                             .firstChildElement("text")
@@ -278,6 +271,27 @@ QString EpubBook::indexToUrl(int index) {
     mSpineIndex = index;
 
     return getCurrentPageUrl();
+}
+int EpubBook::urlToIndex(const QString &url)
+{
+    for (int i = 0; i < m_Manifest.size(); i++) {
+        QVariantMap item = m_Manifest.at(i).toVariantMap();
+        if (item["href"].toString() == url || url.endsWith(item["href"].toString())) {
+            for (int n = 0; n < m_Spine.size(); n++) {
+                QVariantMap spineItem = m_Spine.at(n).toVariantMap();
+                qDebug() << " page url......" << spineItem["idref"].toString()
+                         << item["id"].toString();
+                if (spineItem["idref"].toString() == "") {
+                    continue;
+                }
+                if (spineItem["idref"].toString() == item["id"].toString()) {
+                    mSpineIndex = n;
+                    return n;
+                }
+            }
+        }
+    }
+    return 0;
 }
 QString EpubBook::getFirstPageUrl() {
     for (int i = 0; i < m_Spine.size(); i++) {
@@ -317,7 +331,7 @@ QString EpubBook::prevPage() {
 
 QString EpubBook::getCurrentPageUrl() {
     if (mSpineIndex < 0 || mSpineIndex >= m_Spine.size()) {
-        return "";
+        return tocBase.absolutePath();
     }
     QVariantMap item = m_Spine.at(mSpineIndex).toVariantMap();
     for (int i = 0; i < m_Manifest.size(); i++) {
@@ -383,6 +397,7 @@ QByteArray EpubBook::openFileByUrl(const QString &url) {
     if (hrefs.size() > 1) {
         href = hrefs[0];
     }
+//    qDebug() << "absoluteFilePath(href)" << absoluteFilePath(href);
 
     //    qDebug() << "尝试打开文件:" << QDir::cleanPath(tocBase.filePath(href))
     //             << href;

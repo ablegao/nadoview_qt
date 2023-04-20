@@ -76,7 +76,7 @@ Window {
 
 //        pageView.text = tableOfContent.openPage(url);
         pageView.url = tableOfContent.hosts()+ url;
-        onstartScrollTo = read.last_read_scroll_number;
+        if(read.last_read_scroll_number) onstartScrollTo = read.last_read_scroll_number;
 //        flick.contentY = onstartScrollTo;
     }
 
@@ -95,7 +95,7 @@ Window {
         if(bookUrl!=""){
 
             tableOfContent.openBook(bookUrl);
-            userdata.addBook(bookPath);
+            userdata.addBook(bookUrl);
         }
         else tableOfContent.openBook(books[0].book_url);
 
@@ -132,6 +132,9 @@ Window {
                                          image.style.maxWidth = '90%';
                                        });
                                        `);
+                console.log(tableOfContent.urlToIndex(url));
+                console.log(root.bookName, tableOfContent.readIndex());
+                userdata.read(root.bookName,tableOfContent.readIndex(),0);
             }
 
         }
@@ -537,10 +540,7 @@ Window {
                         onClicked: function(){
 
                             tocListView.currentIndex = index;
-//                            pageView.url = "mybook://book.local"+chapterUrl;
                             pageView.url = tableOfContent.hosts()+chapterUrl;
-                            console.log(chapterUrl);
-
                         }
                     }
                 }

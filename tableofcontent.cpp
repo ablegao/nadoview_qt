@@ -111,7 +111,7 @@ Q_INVOKABLE void TableOfContent::openBook(const QString &bookUri) {
         };
         emit bookOpenFinishd(info);
     } else {
-        qDebug() << "open file error";
+        qDebug() << "open file error " << status << bookUri;
     }
 
     //    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler("mybook",
@@ -195,6 +195,10 @@ bool TableOfContent::useMarkDown() {
 
 QString TableOfContent::indexToUrl(int index) {
     return mBook->indexToUrl(index);
+}
+int TableOfContent::urlToIndex(const QString &url)
+{
+    return mBook->urlToIndex(url);
 }
 int TableOfContent::readIndex() { return mBook->readIndex(); }
 

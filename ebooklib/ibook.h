@@ -38,6 +38,7 @@ public:
     Q_INVOKABLE virtual int parseBook(QIODevice *ioDevice) = 0;
     // 打开一个章节， 内容需要解析放到QVariantList 中。QML 处理实际分野逻辑
     virtual QString indexToUrl(int index) = 0;
+    virtual int urlToIndex(const QString &url)=0;
     Q_INVOKABLE virtual QVariantMap openChapter(const QString &url) = 0;
     Q_INVOKABLE virtual QString getFirstPageUrl() = 0;
     virtual QString nextPage() = 0;
