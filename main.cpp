@@ -14,6 +14,7 @@
 #include "openchatmodel.h"
 #include "tableofcontent.h"
 #include "userdata.h"
+#include "myappsingle.h"
 
 
 
@@ -24,6 +25,7 @@ int main(int argc, char *argv[]) {
     QtWebView::initialize();
 
     MyApplication app(argc, argv);
+    MyAppSingle appSingle ;
 
 
 //    TableOfContent book{};
@@ -49,6 +51,7 @@ int main(int argc, char *argv[]) {
     // open chat model 注册
     qmlRegisterType<OpenChatModel>("NadoView", 1, 0, "OpenChatModel");
     qmlRegisterType<NetworkManager>("NadoView", 1, 0, "NetworkManager");
+//    qmlRegisterSingletonType<MyApplication>("NadoView",1,0,"FileOpend", MyApplication::fileOpend);
     // 初始化引擎
     QQmlApplicationEngine engine;
 //    engine.addImageProvider(QLatin1String("mybook"), scheme);
@@ -56,20 +59,34 @@ int main(int argc, char *argv[]) {
     QQmlContext *context = engine.rootContext();
     qDebug() << args;
 
+
     const QUrl url(u"qrc:/nadoview/main.qml"_qs);
 
     QObject::connect(
-        &engine, &QQmlApplicationEngine::objectCreated, &app,
+        &engine,
+        &QQmlApplicationEngine::objectCreated,
+        &app,
         [url](QObject *obj, const QUrl &objUrl) {
             if (!obj && url == objUrl)
                 QCoreApplication::exit(-1);
         },
         Qt::QueuedConnection);
+
+    //    engine.rootContext()->setContextProperty("appSingle",appSingle);
+    engine.rootContext()->setContextProperty("appSingle",&appSingle);
+
+    // 链接文件打开事件
+    QObject::connect(&app, &MyApplication::fileOpend, &appSingle,
+                     &MyAppSingle::fileOpend);
+
     engine.load(url);
 
-//    // 链接文件打开事件
-//    QObject::connect(&app, &MyApplication::fileOpend, &book,
-//                     &TableOfContent::openBook);
+    if (args.size() > 1) {
+        emit appSingle.fileOpend(args[1]);
+    } else {
+        emit appSingle.noOpenFile();
+    }
+
 
     return app.exec();
 }

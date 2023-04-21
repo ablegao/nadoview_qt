@@ -41,6 +41,8 @@ qt_add_executable(appnadoview
     mybookimageschemehandler.cpp
     networkmanager.h
     networkmanager.cpp
+    myappsingle.h
+    myappsingle.cpp
 
 #    customurlschemehandler.h
 #    customurlschemehandler.cpp

@@ -279,8 +279,8 @@ int EpubBook::urlToIndex(const QString &url)
         if (item["href"].toString() == url || url.endsWith(item["href"].toString())) {
             for (int n = 0; n < m_Spine.size(); n++) {
                 QVariantMap spineItem = m_Spine.at(n).toVariantMap();
-                qDebug() << " page url......" << spineItem["idref"].toString()
-                         << item["id"].toString();
+//                qDebug() << " page url......" << spineItem["idref"].toString()
+//                         << item["id"].toString();
                 if (spineItem["idref"].toString() == "") {
                     continue;
                 }

@@ -20,6 +20,7 @@ Window {
     property  string bookUrl: ""
     property  int  pageIndex: 0;
     property int onstartScrollTo: 0
+//    flags: Qt.Window | Qt.FramelessWindowHint
     visible: true
     width: 760
     height: 900
@@ -40,9 +41,9 @@ Window {
 
     function bookOpenFinishd(obj){
         console.log(JSON.stringify(obj));
-//        root.title = "Currently using NadoView 0.1 to read《" + obj.book_name + "》";
-//        root.bookName = obj.book_name;
-//        root.lang = obj.lang;
+        root.title = "Currently using NadoView 0.1 to read《" + obj.book_name + "》";
+        root.bookName = obj.book_name;
+        root.lang = obj.lang;
 //        var source = "image://mybook/"++"?180x240";
 //        console.log("image......",obj.firstPageUrl,source);
         bookIcon.source = tableOfContent.hosts()+obj.coverImg;
@@ -80,21 +81,25 @@ Window {
         userdata.read(root.bookName,index,0);
 
     }
+    function onFileOpen(url){
+        tableOfContent.openBook(url);
+
+    }
+    //没有打开的文件时
+    function noOpenFile(){
+        var books = userdata.books(1);
+        tableOfContent.openBook(books[0].book_url);
+    }
     Component.onCompleted: function(){
         console.log("BOOK address:",root.bookUrl);
-        var books = userdata.books(1);
+//        var books = userdata.books(1);
 //        book_list_grid.model = books;
         tableOfContent.onBookOpenFinishd.connect(bookOpenFinishd);
         tableOfContent.onOpenPageFinishd.connect(bookChapterReaded);
-        if(root.bookUrl!=""){
-
-            tableOfContent.openBook(bookUrl);
-            userdata.addBook(bookUrl);
-        }
-        else tableOfContent.openBook(books[0].book_url);
+        appSingle.onFileOpend.connect(onFileOpen);
+        appSingle.onNoOpenFile.connect(noOpenFile);
 
     }
-
 
     Rectangle{
         id:centerBox
@@ -120,6 +125,9 @@ Window {
 
                 pageView.runJavaScript("document.body.style.margin='20px';");
                 pageView.runJavaScript("document.body.style.textIndent='2em';");
+//                pageView.runJavaScript("document.body.style.scrollX='hidden';");
+                pageView.runJavaScript("document.body.style.overflowX='hidden';");
+//                pageView.runJavaScript("document.body.style.overflowY='hidden';");
                 pageView.runJavaScript(`
                                        var images = document.querySelectorAll('img');
                                        Array.prototype.forEach.call(images, function(image) {
@@ -324,22 +332,22 @@ Window {
                     }
                 }
 
-                Text {
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
+//                Text {
+//                    width: parent.cellHeight
+//                    height: parent.cellHeight
+////                            radius: 2
+//                    font.pixelSize: parent.cellHeight
+//                    text:''
 
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:function() {
-                            screen_win.setSource("qrc:/nadoview/books.qml",{});
-                        }
-                    }
-                }
+////                            border.width:1
+//                    font.family: iconFont.name
+//                    MouseArea {
+//                        anchors.fill: parent
+//                        onClicked:function() {
+//                            screen_win.setSource("qrc:/nadoview/books.qml",{});
+//                        }
+//                    }
+//                }
             }
         }
     }
