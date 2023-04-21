@@ -56,7 +56,7 @@ qt_add_executable(appnadoview
 qt_add_qml_module(appnadoview
     URI nadoview
     VERSION 1.0
-    QML_FILES main.qml 
+    QML_FILES mainwin.qml main.qml books.qml
 )
 
 set_target_properties(appnadoview PROPERTIES

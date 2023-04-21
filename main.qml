@@ -10,33 +10,26 @@ import QtWebView 1.1
 
 Window {
     id: root
-    visible: true
-    width: 760
-    height: 900
-    title: "Nado View"
-
+    title: "Nado View 0.1 Preview"
     property string lang: "cn"
     property int screenWidthThreshold: 1600
     property int itemsPerPage: width >= screenWidthThreshold ? 2 : 1
     property string pageHref:"";
     property string pageDesc:"";
     property  string bookName: ""
-//    property  string bookUrl: ""
+    property  string bookUrl: ""
     property  int  pageIndex: 0;
     property int onstartScrollTo: 0
-//    property var books : userdata.books()
+    visible: true
+    width: 760
+    height: 900
     UserData{
         id:userdata
     }
-//    FontLoader {
-//            id: customFont
-//            source: "qrc:/fonts/AlibabaPuHuiTi-2-55-Regular.ttf" // 修改为自定义字体文件的相对路径
-//    }
+    TableOfContent {
+        id:tableOfContent
+    }
 
-//    FontLoader{
-//        id:customBoldFont
-//        source:"qrc:/fonts/CN-Bold.ttf"
-//    }
 
     FontLoader{
         id:iconFont
@@ -46,12 +39,13 @@ Window {
     //:/
 
     function bookOpenFinishd(obj){
-        root.title = "Currently using NadoView 0.1 to read《" + obj.book_name + "》";
-        root.bookName = obj.book_name;
-        root.lang = obj.lang;
-        var source = "image://mybook/"+obj.coverImg+"?180x240";
+        console.log(JSON.stringify(obj));
+//        root.title = "Currently using NadoView 0.1 to read《" + obj.book_name + "》";
+//        root.bookName = obj.book_name;
+//        root.lang = obj.lang;
+//        var source = "image://mybook/"++"?180x240";
 //        console.log("image......",obj.firstPageUrl,source);
-        bookIcon.source = source;
+        bookIcon.source = tableOfContent.hosts()+obj.coverImg;
         runingChatModel.addMessage("Reading "+obj.name,"system");
 
 //        if(tableOfContent.useMarkDown()){
@@ -60,7 +54,7 @@ Window {
         tableOfContent.setSize(pageView.width,pageView.height);
         tocListView.currentIndex = 0;
         var read = userdata.openBook(obj.book_name);
-        console.log("========= open book",JSON.stringify(read));
+
 //        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
 //        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
         var url  = obj.firstPageUrl;
@@ -92,7 +86,7 @@ Window {
 //        book_list_grid.model = books;
         tableOfContent.onBookOpenFinishd.connect(bookOpenFinishd);
         tableOfContent.onOpenPageFinishd.connect(bookChapterReaded);
-        if(bookUrl!=""){
+        if(root.bookUrl!=""){
 
             tableOfContent.openBook(bookUrl);
             userdata.addBook(bookUrl);
@@ -283,7 +277,7 @@ Window {
                             var u= tableOfContent.nextPage();
                             if(u!=="")
                             pageView.url =tableOfContent.hosts()+u;
-                            root.onstartScrollTo = 0;
+//                            root.onstartScrollTo = 0;
                         }
                     }
                 }
@@ -342,8 +336,7 @@ Window {
                     MouseArea {
                         anchors.fill: parent
                         onClicked:function() {
-                            bookLists.open();
-                            sync_open_load.start();
+                            screen_win.setSource("qrc:/nadoview/books.qml",{});
                         }
                     }
                 }
@@ -361,127 +354,6 @@ Window {
                 id:painterBox_text
             }
 //        }
-    }
-
-    Popup {
-        id: bookLists
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width:root.width
-        height:root.height - webview_btns.height
-        Rectangle {
-                    anchors.fill: parent
-                    color: "#fffffe"
-                    radius: 10
-        }
-        Text {
-            id:bookLists_Loading
-            text:"loading...."
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignHCenter
-            anchors.fill: parent
-
-        }
-        onClosed: function(){
-            bookLists_Loading.visible=false;
-        }
-        onOpened: function(){
-            bookLists_Loading.visible=true;
-        }
-        Loader {
-                id: bookListLoader
-                anchors.fill: parent
-                active: false
-                asynchronous: true
-                visible: status == Loader.Ready
-                sourceComponent: bookListComponent
-                onLoaded: function(){
-                    bookLists_Loading.visible=false;
-                }
-        }
-//        onOpened:  {
-//                sync_open_load.start();
-////                bookListLoader.sourceComponent = bookListComponent
-////                bookLists.contentItem = bookListLoader.item // 设置Popup内容为加载的GridView
-////            bookListLoader.setSource(bookListComponent)
-
-////            console.log("=----------");
-//        }
-        Timer {
-            id:sync_open_load
-            interval: 10
-            repeat: false
-            running: false
-            onTriggered: function(){
-                bookListLoader.active = false  // 关闭Loader
-                bookListLoader.active = true   // 重新加载,获取最新数据模型
-            }
-        }
-
-        Component {
-            id:bookListComponent
-
-            GridView {
-               id:book_list_grid
-               anchors.fill: parent
-               cellWidth: 180
-               cellHeight: 320
-               clip:true
-
-
-               model:userdata.books()
-
-               delegate: Rectangle {
-                    width:book_list_grid.cellWidth
-                    height:book_list_grid.cellHeight
-                    anchors.margins: 4
-                    color:"#fffffe"
-    //                DropShadow {
-    //                   anchors.fill: parent
-    //                   radius: 8.0
-    //                   samples: 17
-    //                   color: "#80000000"
-    //                   horizontalOffset: 3
-    //                   verticalOffset: 3
-    //                   spread: 0
-    //               }
-                   Column{
-                        Image {
-                            id:book_icon
-                            width: book_list_grid.cellWidth-4
-                            height: width/0.704
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous:true
-                            visible: modelData.book_image.length>0?true:false
-                            source: visible?"data:image/png;base64,"+modelData.book_image:""  // 模拟图片源
-
-                        }
-                        Text {
-                            id:title_icon
-                            text:modelData.book_name
-                            elide: Text.ElideRight
-                            width:book_icon.width
-                            height:book_icon.visible?book_list_grid.cellHeight-book_icon.height:book_list_grid.cellHeight
-                            verticalAlignment: Text.AlignVCenter
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode :Text.Wrap
-                            color:"#272343" // book_icon.visible? :"#e3f6f5"
-//                            background:book_icon.visible?"":"#e3f6f5"
-                            anchors.margins: 2
-                        }
-                    }
-                   MouseArea {
-                    anchors.fill: parent
-                    onClicked: function(){
-    //                    console.log(modelData.book_name);
-                        tableOfContent.openBook(modelData.book_url);
-                        bookLists.close();
-                    }
-                   }
-                }
-            }
-        }
     }
 
     Popup{
@@ -507,13 +379,10 @@ Window {
                 width:leftBox.width-20
                 height:200 +20
                 radius: 10
-//                visible: leftBox.implicitWidth>=200?true:false
-
-
-//                border.width:1
                 Image{
                     id:bookIcon
-                    source:""
+//                    source:""
+
                     anchors.margins: 10
                     anchors.centerIn: parent
                 }
@@ -645,14 +514,11 @@ Window {
 //                            radius: 2
                         font.pixelSize: parent.cellHeight
                         text:''
-
-//                            border.width:1
                         font.family: iconFont.name
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
                                 chat_input_text.text+= pageView.selectedText;
-//                                        console.log("Clicked color:", colorBlock.color)
                             }
                         }
                     }

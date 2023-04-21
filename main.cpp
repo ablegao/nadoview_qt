@@ -26,9 +26,9 @@ int main(int argc, char *argv[]) {
     MyApplication app(argc, argv);
 
 
-    TableOfContent book{};
-    MyBookImageSchemeHandler *scheme = new MyBookImageSchemeHandler();
-    scheme->book = &book;
+//    TableOfContent book{};
+//    MyBookImageSchemeHandler *scheme = new MyBookImageSchemeHandler();
+//    scheme->book = &book;
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
@@ -45,25 +45,16 @@ int main(int argc, char *argv[]) {
     //    qmlRegisterType<TableOfContent>("NadoView", 1, 0,
     //    "TableOfContentModel");
     qmlRegisterType<UserData>("NadoView", 1, 0, "UserData");
-
+    qmlRegisterType<TableOfContent>("NadoView",1,0,"TableOfContent");
     // open chat model 注册
     qmlRegisterType<OpenChatModel>("NadoView", 1, 0, "OpenChatModel");
     qmlRegisterType<NetworkManager>("NadoView", 1, 0, "NetworkManager");
     // 初始化引擎
     QQmlApplicationEngine engine;
-    engine.addImageProvider(QLatin1String("mybook"), scheme);
+//    engine.addImageProvider(QLatin1String("mybook"), scheme);
 
     QQmlContext *context = engine.rootContext();
     qDebug() << args;
-    if (args.size() > 1) {
-        context->setContextProperty("bookUrl", args[1]);
-        qDebug() << "============ " << args[1];
-//        book.openBook(args[1]);
-    } else {
-        context->setContextProperty("bookUrl", "");
-    }
-
-    engine.rootContext()->setContextProperty("tableOfContent", &book);
 
     const QUrl url(u"qrc:/nadoview/main.qml"_qs);
 
@@ -76,9 +67,9 @@ int main(int argc, char *argv[]) {
         Qt::QueuedConnection);
     engine.load(url);
 
-    // 链接文件打开事件
-    QObject::connect(&app, &MyApplication::fileOpend, &book,
-                     &TableOfContent::openBook);
+//    // 链接文件打开事件
+//    QObject::connect(&app, &MyApplication::fileOpend, &book,
+//                     &TableOfContent::openBook);
 
     return app.exec();
 }

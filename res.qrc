@@ -3,5 +3,7 @@
         <file>fonts/AlibabaPuHuiTi-2-55-Regular.ttf</file>
         <file>fonts/CN-Bold.ttf</file>
         <file>fonts/fontawesome-webfont.ttf</file>
+        <file>books.qml</file>
+        <file>mainwin.qml</file>
     </qresource>
 </RCC>
