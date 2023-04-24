@@ -1,36 +1,31 @@
 #include <QCommandLineParser>
+#include <QDebug>
 #include <QGuiApplication>
+#include <QLocale>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
-#include <QLocale>
 #include <QTranslator>
-#include <QDebug>
 #include <QUrl>
 #include <QtWebView>
 
+#include "QtQml/qqml.h"
 #include "myapplication.h"
-#include "mybookimageschemehandler.h"
-#include "networkmanager.h"
+#include "myappsingle.h"
 #include "openchatmodel.h"
 #include "tableofcontent.h"
+#include "transfer.h"
 #include "userdata.h"
-#include "myappsingle.h"
-
-
-
-
 
 int main(int argc, char *argv[]) {
     //        QtWebEngineQuick::initialize();
     QtWebView::initialize();
 
     MyApplication app(argc, argv);
-    MyAppSingle appSingle ;
+    MyAppSingle appSingle;
 
-
-//    TableOfContent book{};
-//    MyBookImageSchemeHandler *scheme = new MyBookImageSchemeHandler();
-//    scheme->book = &book;
+    //    TableOfContent book{};
+    //    MyBookImageSchemeHandler *scheme = new MyBookImageSchemeHandler();
+    //    scheme->book = &book;
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
@@ -46,34 +41,33 @@ int main(int argc, char *argv[]) {
 
     //    qmlRegisterType<TableOfContent>("NadoView", 1, 0,
     //    "TableOfContentModel");
-    qmlRegisterType<UserData>("NadoView", 1, 0, "UserData");
-    qmlRegisterType<TableOfContent>("NadoView",1,0,"TableOfContent");
+    qmlRegisterType<UserData>("com.tap2happy.nadoview", 1, 0, "UserData");
+    qmlRegisterType<TableOfContent>("com.tap2happy.nadoview", 1, 0,
+                                    "TableOfContent");
     // open chat model 注册
-    qmlRegisterType<OpenChatModel>("NadoView", 1, 0, "OpenChatModel");
-    qmlRegisterType<NetworkManager>("NadoView", 1, 0, "NetworkManager");
-//    qmlRegisterSingletonType<MyApplication>("NadoView",1,0,"FileOpend", MyApplication::fileOpend);
+    qmlRegisterType<OpenChatModel>("com.tap2happy.nadoview", 1, 0,
+                                   "OpenChatModel");
+    qmlRegisterType<Transfer>("com.tap2happy.nadoview", 1, 0, "AwsTransfer");
+    //    qmlRegisterSingletonType<MyApplication>("NadoView",1,0,"FileOpend",
+    //    MyApplication::fileOpend);
     // 初始化引擎
     QQmlApplicationEngine engine;
-//    engine.addImageProvider(QLatin1String("mybook"), scheme);
+    //    engine.addImageProvider(QLatin1String("mybook"), scheme);
 
     QQmlContext *context = engine.rootContext();
     qDebug() << args;
 
-
     const QUrl url(u"qrc:/nadoview/main.qml"_qs);
 
     QObject::connect(
-        &engine,
-        &QQmlApplicationEngine::objectCreated,
-        &app,
+        &engine, &QQmlApplicationEngine::objectCreated, &app,
         [url](QObject *obj, const QUrl &objUrl) {
-            if (!obj && url == objUrl)
-                QCoreApplication::exit(-1);
+            if (!obj && url == objUrl) QCoreApplication::exit(-1);
         },
         Qt::QueuedConnection);
 
     //    engine.rootContext()->setContextProperty("appSingle",appSingle);
-    engine.rootContext()->setContextProperty("appSingle",&appSingle);
+    engine.rootContext()->setContextProperty("appSingle", &appSingle);
 
     // 链接文件打开事件
     QObject::connect(&app, &MyApplication::fileOpend, &appSingle,
@@ -86,7 +80,6 @@ int main(int argc, char *argv[]) {
     } else {
         emit appSingle.noOpenFile();
     }
-
 
     return app.exec();
 }

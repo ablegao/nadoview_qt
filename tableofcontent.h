@@ -13,7 +13,11 @@
 #include <QHttpServer>
 #include <QHttpServerRequest>
 #include <QHttpServerResponse>
-
+#include <aws/translate/TranslateClient.h>
+#include <aws/translate/TranslateRequest.h>
+#include <aws/translate/model/TranslateTextRequest.h>
+#include <aws/translate/model/TranslateTextResult.h>
+#include <aws/core/Aws.h>
 
 
 //#include <QWebEngineProfile>
@@ -58,10 +62,12 @@ public:
     Q_INVOKABLE void shareToImage(const QString &text, const QString &bookName, const QString &outdir, int fontSize=16);
     Q_INVOKABLE QString hosts();
     QByteArray handleRequest(const QHttpServerRequest &request);
+    QByteArray transferRequest(const QHttpServerRequest &request);
     //    QWebEngineUrlSchemeHandler *urlSchemeHandler();
 signals:
     void bookOpenFinishd(const QVariantMap &bookInfo);
     void openPageFinishd(const QString &url,int index);
+    void selectedText(const QString &text);
 //    void bookChapterReaded(const QVariantMap &info);
 //    void openAiDescFinished(const QString &desc);
 

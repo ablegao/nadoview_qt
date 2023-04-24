@@ -3,14 +3,13 @@
 
 #include <QObject>
 
-class MyAppSingle : public QObject
-{
+class MyAppSingle : public QObject {
     Q_OBJECT
-public:
+  public:
     MyAppSingle();
-signals:
+  signals:
     void fileOpend(const QString &filePath);
     void noOpenFile();
 };
 
-#endif // MYAPPSINGLE_H
+#endif  // MYAPPSINGLE_H

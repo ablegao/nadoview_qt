@@ -1,12 +1,13 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 //import QtNetwork
-import NadoView 1.0
+import com.tap2happy.nadoview 1.0
 //import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
 
 import QtWebView 1.1
-
+//import QtWebEngine 1.10
+import QtWebChannel 1.5
 
 Window {
     id: root
@@ -20,8 +21,8 @@ Window {
     property  string bookUrl: ""
     property  int  pageIndex: 0;
     property int onstartScrollTo: 0
-//    flags: Qt.Window | Qt.FramelessWindowHint
     visible: true
+	
     width: 760
     height: 900
     UserData{
@@ -29,6 +30,23 @@ Window {
     }
     TableOfContent {
         id:tableOfContent
+        onSelectedText: function(text){
+            transfer_box_text.text="loading...";
+            transferBox.open();
+            myTransfer.transferText(text);
+        }
+    }
+    AwsTransfer {
+        id:myTransfer
+        onResultReady: function(out){
+			//            console.log("transfer out:",out);
+			if(out.split(" ").length ==1){
+				
+            	transfer_box_text.text = "<a href='eudic://dict/"+out+"'>" +out+"</a>";
+				return;
+			}
+            transfer_box_text.text = out;
+        }
     }
 
 
@@ -47,8 +65,7 @@ Window {
 //        var source = "image://mybook/"++"?180x240";
 //        console.log("image......",obj.firstPageUrl,source);
         bookIcon.source = tableOfContent.hosts()+obj.coverImg;
-        runingChatModel.addMessage("Reading "+obj.name,"system");
-
+        runingChatModel.addMessage("Use the content in \""+obj.book_name+"\" to answer my question.","system");
 //        if(tableOfContent.useMarkDown()){
 //            pageView.textFormat = Text.MarkdownText;
 //        }
@@ -106,10 +123,6 @@ Window {
         color:"#fffffe"
         width:parent.width
         height:parent.height
-        NetworkManager {
-            id:network_access_manager
-        }
-
         WebView {
             id:pageView
 //                    width: flick.width-20
@@ -122,9 +135,11 @@ Window {
                 if(event.status!=2){
                     return;
                 }
+                pageView.runJavaScript(` var transfer_url = "`+tableOfContent.hosts()+`/transfer";
+                                       `);
 
                 pageView.runJavaScript("document.body.style.margin='20px';");
-                pageView.runJavaScript("document.body.style.textIndent='2em';");
+//                pageView.runJavaScript("document.body.style.textIndent='2em';");
 //                pageView.runJavaScript("document.body.style.scrollX='hidden';");
                 pageView.runJavaScript("document.body.style.overflowX='hidden';");
 //                pageView.runJavaScript("document.body.style.overflowY='hidden';");
@@ -134,6 +149,23 @@ Window {
                                          image.style.maxWidth = '90%';
                                        });
                                        `);
+                pageView.runJavaScript(`
+                                       var ps = document.querySelectorAll('p');
+                                       Array.prototype.forEach.call(ps, function(p) {
+                                         p.style.textIndent = '2em';
+                                       });
+                                       `);
+
+                pageView.runJavaScript(`document.addEventListener('mouseup', function() {
+                                       var selection = window.getSelection().toString();
+                                       if (selection !== '') {
+                                       var xhr = new XMLHttpRequest();
+                                       xhr.open('POST', transfer_url);
+                                       xhr.send(selection);
+                                       }
+                                     });`,function(result){
+                        console.log(result);
+                });
                 console.log(tableOfContent.urlToIndex(url));
                 console.log(root.bookName, tableOfContent.readIndex());
                 userdata.read(root.bookName,tableOfContent.readIndex(),0);
@@ -155,48 +187,6 @@ Window {
                 anchors.centerIn: parent
                 spacing: 5
                 property int  cellHeight: 26
-                Repeater {
-                    model: ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
-                    delegate: Rectangle {
-                        id: colorBlock
-                        width: parent.cellHeight
-                        height: parent.cellHeight
-                        color:  modelData
-                        radius: 2
-                        border.width:1
-//                                function getColor  (index) {
-//                                    console.log("index==== ",index);
-//                                    var colors = ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
-//                                    return colors[index]
-//                                }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                var start = pageView.selectionStart
-                                var end = pageView.selectionEnd
-                                console.log(start,end);
-                                var extraSelection = {
-                                    "cursor": {"selectionStart": start, "selectionEnd": end},
-                                    "format": {"background": "yellow"}
-                                }
-                                pageView.extraSelections.push(extraSelection)
-                                pageView.extraSelections = pageView.extraSelections;
-//                                pageView.runJavaScript(`
-//                                                var selectedText = window.getSelection();
-//                                                var range = selectedText.getRangeAt(0);
-//                                                var span = document.createElement('span');
-//                                                span.style.backgroundColor ="`+modelData+`";
-//                                                range.surroundContents(span);
-//                                            `);
-//                                        pageView.text
-//                                        console.log("Clicked color:", colorBlock.color)
-//                                        pageView.text= pageView.text.replace(pageView.selectedText,"<span color='"+colorBlock.color+"'>"+pageView.selectedText+"</span>")
-                            }
-                        }
-
-
-                    }
-                }
 
                 Text {
                     id: open_menu
@@ -392,7 +382,12 @@ Window {
 //                    source:""
 
                     anchors.margins: 10
-                    anchors.centerIn: parent
+                    anchors.fill: parent
+//                    width:parent.width-40
+//                    height:parent.height-40
+                    fillMode: Image.PreserveAspectFit
+//                    anchors.centerIn: parent
+
                 }
             }
             ListView {
@@ -597,6 +592,54 @@ Window {
                     }
                 }
             }
+    }
+
+    Popup {
+        id:transferBox
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width:root.width
+        height:transferBoxColumn.height+20
+        y:root.height - height - webview_btns.height
+        Rectangle {
+                    anchors.fill: parent
+                    color: "#fffffe"
+        }
+        Column{
+            id:transferBoxColumn
+            width:parent.width
+//            anchors.fill: parent
+            Row {
+                height:26
+                spacing: 5
+                property int  cellHeight: 26
+                Repeater {
+                    model: ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
+                    delegate: Rectangle {
+                        width: parent.cellHeight
+                        height: parent.cellHeight
+                        color:  modelData
+                        radius: 2
+                        border.width:1
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                            }
+                        }
+                    }
+                }
+            }
+            Text {
+                id:transfer_box_text
+				text:""
+				textFormat: Text.RichText
+                wrapMode:Text.Wrap
+                width:parent.width-40
+				anchors.margins: 20
+				onLinkActivated:(link)=>Qt.openUrlExternally(link)
+            }
+        }
     }
 
 
