@@ -23,7 +23,7 @@ Window {
     property int onstartScrollTo: 0
     visible: true
 	
-    width: 760
+    width: 1060
     height: 900
     UserData{
         id:userdata
@@ -40,7 +40,7 @@ Window {
         id:myTransfer
         onResultReady: function(out){
 			//            console.log("transfer out:",out);
-			if(out.split(" ").length ==1){
+			if(out.split(" ").length ==1 || out.length==1){
 				
             	transfer_box_text.text = "<a href='eudic://dict/"+out+"'>" +out+"</a>";
 				return;
@@ -116,231 +116,311 @@ Window {
         appSingle.onFileOpend.connect(onFileOpen);
         appSingle.onNoOpenFile.connect(noOpenFile);
 
-    }
+	}
+		Rectangle{
+    	    id:leftBox
+    	    //modal: true
+    	    //focus: true
+    	    //closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+			width:300
+			color:"#fffffe"
+    	    height:root.height
+//  	      Rectangle {
+//  	          anchors.fill: parent
+//  	          color: "#fffffe"
+//  	          radius: 10
+//  	      }
+	  	    function open(){
+				if(width==300){
+					width=0;
+					root.width = root.width-300;	
+					root.x = root.x+300;
+				}else{
+					width = 300;
+					root.width = root.width+300;
+					root.x = root.x-300;
+				}
+	  	    }
+    	    Column{
+    	        Rectangle{
+    	            id:bookIconBox
+    	            width:leftBox.width-20
+    	            height:200 +20
+    	            radius: 10
+    	            Image{
+    	                id:bookIcon
+//  	                  source:""
 
-    Rectangle{
-        id:centerBox
-        color:"#fffffe"
-        width:parent.width
-        height:parent.height
-        WebView {
-            id:pageView
-//                    width: flick.width-20
-//                    x:10
-            x:0
-            y:0
-            width: parent.width
-            height: parent.height -webview_btns.height
-            onLoadingChanged:function(event){
-                if(event.status!=2){
-                    return;
-                }
-                pageView.runJavaScript(` var transfer_url = "`+tableOfContent.hosts()+`/transfer";
-                                       `);
+    	                anchors.margins: 10
+    	                anchors.fill: parent
+//  	                  width:parent.width-40
+//  	                  height:parent.height-40
+    	                fillMode: Image.PreserveAspectFit
+//  	                  anchors.centerIn: parent
 
-                pageView.runJavaScript("document.body.style.margin='20px';");
-//                pageView.runJavaScript("document.body.style.textIndent='2em';");
-//                pageView.runJavaScript("document.body.style.scrollX='hidden';");
-                pageView.runJavaScript("document.body.style.overflowX='hidden';");
-//                pageView.runJavaScript("document.body.style.overflowY='hidden';");
-                pageView.runJavaScript(`
-                                       var images = document.querySelectorAll('img');
-                                       Array.prototype.forEach.call(images, function(image) {
-                                         image.style.maxWidth = '90%';
-                                       });
-                                       `);
-                pageView.runJavaScript(`
-                                       var ps = document.querySelectorAll('p');
-                                       Array.prototype.forEach.call(ps, function(p) {
-                                         p.style.textIndent = '2em';
-                                       });
-                                       `);
+    	            }
+    	        }
+    	        ListView {
+    	            id: tocListView
+//  	              anchors.margins: 10
+    	            width:leftBox.width
+    	            height:leftBox.height - bookIconBox.height -20
+    	            model: tableOfContent
+    	            delegate:  Item{
+    	                width: tocListView.width
+    	                height: textItem.implicitHeight
+    	                Text {
+    	                    id:textItem
+    	                    text: chapterName
+    	                    font.pixelSize: 16
+    	                    padding: 8
+    	                    width:parent.width
+    	                    wrapMode:Text.Wrap
+    	                }
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: function(){
 
-                pageView.runJavaScript(`document.addEventListener('mouseup', function() {
-                                       var selection = window.getSelection().toString();
-                                       if (selection !== '') {
-                                       var xhr = new XMLHttpRequest();
-                                       xhr.open('POST', transfer_url);
-                                       xhr.send(selection);
-                                       }
-                                     });`,function(result){
-                        console.log(result);
-                });
-                console.log(tableOfContent.urlToIndex(url));
-                console.log(root.bookName, tableOfContent.readIndex());
-                userdata.read(root.bookName,tableOfContent.readIndex(),0);
-            }
+    	                        tocListView.currentIndex = index;
+    	                        pageView.url = tableOfContent.hosts()+chapterUrl;
+    	                    }
+    	                }
+    	            }
+    	            highlight: Rectangle {
+    	                color: "#bae8e8"
+    	                width:leftBox.width-20
+    	            }
+    	            highlightMoveDuration:100
+    	            focus: true
+    	            clip:true
 
-        }
-
-
-        Rectangle{
-            color:"#bae8e8"
-            id:webview_btns
-            width:parent.width
-            anchors.top: pageView.bottom
-            height:35
-//                    border.width: 1
-
-            Row {
-                id:tool_row
-                anchors.centerIn: parent
-                spacing: 5
-                property int  cellHeight: 26
-
-                Text {
-                    id: open_menu
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-                    font.pixelSize: parent.cellHeight
-                    text:''
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            leftBox.open();
-                        }
-                    }
-                }
-                Text {
-                    id: open_chat
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-                    font.pixelSize: parent.cellHeight
-                    text:''
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                              chatBox.open();
-//                                        if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
-//                                        else chatBox.implicitWidth=0;
-                        }
-                    }
-                }
-
-                Text {
-
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
-
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: function(){
-                             // 标记
-
-                        }
-                    }
-                }
-
-                Text {
-
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
-
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: function(){
-                             // 上一页
-                           var u = tableOfContent.prevPage();
-                            if(u!=="") pageView.url =tableOfContent.hosts()+u;
-                        }
-                    }
-                }
-
-                Text {
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
-
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:function() {
-
-                           // 下一页
-                            var u= tableOfContent.nextPage();
-                            if(u!=="")
-                            pageView.url =tableOfContent.hosts()+u;
-//                            root.onstartScrollTo = 0;
-                        }
-                    }
-                }
-
-                Text {
-                    id:share_text
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-                    font.pixelSize: parent.cellHeight
-                    text:''
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:function() {
-                            console.log(pageView.selectedText);
-//                            tableOfContent.shareToImage(pageView.selectedText,root.bookName,16,"/Users/ablegao/code/andctrol/share.jpg");
-                            painterBox_text.text = pageView.selectedText;
-
-                            painterBox.open();
-                        }
-                    }
-                }
+    	        }
+    	    }
+    	}
 
 
-                Text {
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
+    	Rectangle{
+    	    id:centerBox
+    	    color:"#fffffe"
+			width:parent.width-leftBox.width
+			x:leftBox.width
+    	    height:parent.height
+    	    WebView {
+    	        id:pageView
+//  	                  width: flick.width-20
+//  	                  x:10
+    	        width: parent.width
+    	        height: parent.height -webview_btns.height
+    	        onLoadingChanged:function(event){
+    	            if(event.status!=2){
+    	                return;
+    	            }
+    	            pageView.runJavaScript(` var transfer_url = "`+tableOfContent.hosts()+`/transfer";
+    	                                   `);
 
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:function() {
+    	            pageView.runJavaScript("document.body.style.margin='20px';");
+//  	              pageView.runJavaScript("document.body.style.textIndent='2em';");
+//  	              pageView.runJavaScript("document.body.style.scrollX='hidden';");
+    	            pageView.runJavaScript("document.body.style.overflowX='hidden';");
+//  	              pageView.runJavaScript("document.body.style.overflowY='hidden';");
+    	            pageView.runJavaScript(`
+    	                                   var images = document.querySelectorAll('img');
+    	                                   Array.prototype.forEach.call(images, function(image) {
+    	                                     image.style.maxWidth = '90%';
+    	                                   });
+    	                                   `);
+    	            pageView.runJavaScript(`
+    	                                   var ps = document.querySelectorAll('p');
+    	                                   Array.prototype.forEach.call(ps, function(p) {
+    	                                     p.style.textIndent = '2em';
+    	                                   });
+    	                                   `);
 
-//                           // 下一页
-//                            var u= tableOfContent.nextPage();
-//                            if(u!=="")
-//                            pageView.url = "mybook://book.local"+u;
-//                            root.onstartScrollTo = 0;
-                        }
-                    }
-                }
+    	            pageView.runJavaScript(`document.addEventListener('mouseup', function() {
+    	                                   var selection = window.getSelection().toString();
+    	                                   if (selection !== '') {
+    	                                   var xhr = new XMLHttpRequest();
+    	                                   xhr.open('POST', transfer_url);
+    	                                   xhr.send(selection);
+    	                                   }
+    	                                 });`,function(result){
+    	                    console.log(result);
+    	            });
+    	            console.log(tableOfContent.urlToIndex(url));
+    	            console.log(root.bookName, tableOfContent.readIndex());
+    	            userdata.read(root.bookName,tableOfContent.readIndex(),0);
+    	        }
 
-//                Text {
-//                    width: parent.cellHeight
-//                    height: parent.cellHeight
-////                            radius: 2
-//                    font.pixelSize: parent.cellHeight
-//                    text:''
+    	    }
 
-////                            border.width:1
-//                    font.family: iconFont.name
-//                    MouseArea {
-//                        anchors.fill: parent
-//                        onClicked:function() {
-//                            screen_win.setSource("qrc:/nadoview/books.qml",{});
-//                        }
-//                    }
-//                }
-            }
-        }
-    }
+
+    	    Rectangle{
+    	        color:"#bae8e8"
+    	        id:webview_btns
+				width:centerBox.width
+    	        anchors.top: pageView.bottom
+    	        height:35
+//  	                  border.width: 1
+
+    	        Row {
+    	            id:tool_row
+    	            anchors.centerIn: parent
+    	            spacing: 5
+    	            property int  cellHeight: 26
+
+    	            Text {
+    	                id: open_menu
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: {
+    	                        leftBox.open();
+    	                    }
+    	                }
+    	            }
+    	            Text {
+    	                id: open_chat
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: {
+    	                          chatBox.open();
+//  	                                      if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
+//  	                                      else chatBox.implicitWidth=0;
+    	                    }
+    	                }
+    	            }
+
+    	            Text {
+
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+//  	                          radius: 2
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+
+//  	                          border.width:1
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: function(){
+    	                         // 标记
+
+    	                    }
+    	                }
+    	            }
+
+    	            Text {
+
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+//  	                          radius: 2
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+
+//  	                          border.width:1
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: function(){
+    	                         // 上一页
+    	                       var u = tableOfContent.prevPage();
+    	                        if(u!=="") pageView.url =tableOfContent.hosts()+u;
+    	                    }
+    	                }
+    	            }
+
+    	            Text {
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+//  	                          radius: 2
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+
+//  	                          border.width:1
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked:function() {
+
+    	                       // 下一页
+    	                        var u= tableOfContent.nextPage();
+    	                        if(u!=="")
+    	                        pageView.url =tableOfContent.hosts()+u;
+//  	                          root.onstartScrollTo = 0;
+    	                    }
+    	                }
+    	            }
+
+    	            Text {
+    	                id:share_text
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked:function() {
+    	                        console.log(pageView.selectedText);
+//  	                          tableOfContent.shareToImage(pageView.selectedText,root.bookName,16,"/Users/ablegao/code/andctrol/share.jpg");
+    	                        painterBox_text.text = pageView.selectedText;
+
+    	                        painterBox.open();
+    	                    }
+    	                }
+    	            }
+
+
+    	            Text {
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+//  	                          radius: 2
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+
+//  	                          border.width:1
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked:function() {
+
+//  	                         // 下一页
+//  	                          var u= tableOfContent.nextPage();
+//  	                          if(u!=="")
+//  	                          pageView.url = "mybook://book.local"+u;
+//  	                          root.onstartScrollTo = 0;
+    	                    }
+    	                }
+    	            }
+
+//  	              Text {
+//  	                  width: parent.cellHeight
+//  	                  height: parent.cellHeight
+////	                            radius: 2
+//  	                  font.pixelSize: parent.cellHeight
+//  	                  text:''
+
+////	                            border.width:1
+//  	                  font.family: iconFont.name
+//  	                  MouseArea {
+//  	                      anchors.fill: parent
+//  	                      onClicked:function() {
+//  	                          screen_win.setSource("qrc:/nadoview/books.qml",{});
+//  	                      }
+//  	                  }
+//  	              }
+    	        }
+    	    }
+		}
     Popup {
         id: painterBox
         modal: true
@@ -354,80 +434,7 @@ Window {
 //        }
     }
 
-    Popup{
-        id:leftBox
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width:300
-        height:root.height-webview_btns.height
-//        Rectangle {
-//            anchors.fill: parent
-//            color: "#fffffe"
-//            radius: 10
-//        }
-        Rectangle {
-                    anchors.fill: parent
-                    color: "#fffffe"
-                    radius: 10
-        }
-        Column{
-            Rectangle{
-                id:bookIconBox
-                width:leftBox.width-20
-                height:200 +20
-                radius: 10
-                Image{
-                    id:bookIcon
-//                    source:""
-
-                    anchors.margins: 10
-                    anchors.fill: parent
-//                    width:parent.width-40
-//                    height:parent.height-40
-                    fillMode: Image.PreserveAspectFit
-//                    anchors.centerIn: parent
-
-                }
-            }
-            ListView {
-                id: tocListView
-//                anchors.margins: 10
-                width:leftBox.width
-                height:leftBox.height - bookIconBox.height -20
-                model: tableOfContent
-                delegate:  Item{
-                    width: tocListView.width
-                    height: textItem.implicitHeight
-                    Text {
-                        id:textItem
-                        text: chapterName
-                        font.pixelSize: 16
-                        padding: 8
-                        width:parent.width
-                        wrapMode:Text.Wrap
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: function(){
-
-                            tocListView.currentIndex = index;
-                            pageView.url = tableOfContent.hosts()+chapterUrl;
-                        }
-                    }
-                }
-                highlight: Rectangle {
-                    color: "#bae8e8"
-                    width:leftBox.width-20
-                }
-                highlightMoveDuration:100
-                focus: true
-                clip:true
-
-            }
-        }
-    }
-
+    
     Popup{
 //            color:"#fffffe"
             id:chatBox
