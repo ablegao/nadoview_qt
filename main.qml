@@ -40,11 +40,11 @@ Window {
         id:myTransfer
         onResultReady: function(out){
 			//            console.log("transfer out:",out);
-			if(out.split(" ").length ==1 || out.length==1){
-				
-            	transfer_box_text.text = "<a href='eudic://dict/"+out+"'>" +out+"</a>";
-				return;
-			}
+			// if(out.length<=4 || out.split(" ").length ==1){
+			// 	
+            // 	transfer_box_text.text = "<a href='eudic://dict/"+out+"'>" +out+"</a>";
+			// 	return;
+			// }
             transfer_box_text.text = out;
         }
     }
@@ -71,8 +71,8 @@ Window {
 //        }
         tableOfContent.setSize(pageView.width,pageView.height);
         tocListView.currentIndex = 0;
-        var read = userdata.openBook(obj.book_name);
-
+        var read = userdata.openBook(obj.bookPath,obj.book_name,obj.auther,obj.lang);
+		root.bookUrl = obj.bookPath;
 //        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
 //        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
         var url  = obj.firstPageUrl;
@@ -95,7 +95,7 @@ Window {
     property var pageRows:[];
     function bookChapterReaded(obj,index){
         root.pageIndex=index;
-        userdata.read(root.bookName,index,0);
+        userdata.read(root.bookUrl,root.bookName,index,0);
 
     }
     function onFileOpen(url){
@@ -219,6 +219,7 @@ Window {
     	                                   `);
 
     	            pageView.runJavaScript("document.body.style.margin='20px';");
+    	            pageView.runJavaScript("document.body.style.fontSize='18px';");
 //  	              pageView.runJavaScript("document.body.style.textIndent='2em';");
 //  	              pageView.runJavaScript("document.body.style.scrollX='hidden';");
     	            pageView.runJavaScript("document.body.style.overflowX='hidden';");
@@ -246,9 +247,10 @@ Window {
     	                                 });`,function(result){
     	                    console.log(result);
     	            });
-    	            console.log(tableOfContent.urlToIndex(url));
+    	            console.log("find index id",tableOfContent.urlToIndex(url));
     	            console.log(root.bookName, tableOfContent.readIndex());
-    	            userdata.read(root.bookName,tableOfContent.readIndex(),0);
+					userdata.read(root.bookUrl,root.bookName,tableOfContent.readIndex(),0);
+					tocListView.currentIndex = tableOfContent.readIndex();
     	        }
 
     	    }
@@ -637,7 +639,7 @@ Window {
                     }
                 }
             }
-            Text {
+            TextEdit {
                 id:transfer_box_text
 				text:""
 				textFormat: Text.RichText

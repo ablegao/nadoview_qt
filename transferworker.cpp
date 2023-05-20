@@ -3,7 +3,8 @@
 void TransferWorker::doWork(const QString &text, const QString &fromLang,
                             const QString &toLang) {
     QString text1 = text.trimmed();
-    if (text1.split(" ").size() > 1) {
+    // if (text1.split(" ").size() > 1) {
+    if (containsChinese(text) == false) {
         Aws::SDKOptions options;
         Aws::InitAPI(options);
         {
@@ -20,11 +21,20 @@ void TransferWorker::doWork(const QString &text, const QString &fromLang,
             } else {
             }
         }
+
         Aws::ShutdownAPI(options);
     } else {
-        // 使用QProcess 调用系统命令open dict://WORD, 这里面的WORD 是变量text1
-        // QUrl cmd(QString("eudic://dict/%1").arg(text1), QUrl::TolerantMode);
-        // QDesktopServices::openUrl(cmd);
         emit resultReady(text1);
     }
+}
+
+bool TransferWorker::containsChinese(const QString &text) {
+    int textCount = qMax(text.length(), 10);
+
+    for (int i = 0; i < textCount; i++) {
+        if (text[i].unicode() >= 0x4e00 && text[i].unicode() <= 0x9fa5) {
+            return true;
+        }
+    }
+    return false;
 }

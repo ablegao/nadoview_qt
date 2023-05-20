@@ -133,6 +133,11 @@ Q_INVOKABLE void TableOfContent::openBook(const QString &bookUri) {
         emit layoutChanged();
         QVariantMap info = {
             {"book_name", mBook->title},
+            {"bookPath", bookUri},
+            {"auther", mBook->getCreators().join(",")},
+            {"lang", mBook->getLanguage()},
+            {"coverImg", mBook->coverImg},
+            {"firstPageUrl", mBook->getFirstPageUrl()},
             {"lang", mBook->language},
             {"coverImg", mBook->coverImg},
             {"firstPageUrl", mBook->getFirstPageUrl()},
@@ -232,6 +237,7 @@ int TableOfContent::urlToIndex(const QString &url) {
     return mBook->urlToIndex(url);
 }
 int TableOfContent::readIndex() { return mBook->readIndex(); }
+// int TableOfContent::getMenuIndex() { return mBook->readIndex(); }
 
 QString TableOfContent::absoluteFilePath(const QString &u) {
     return mBook->absoluteFilePath(u);

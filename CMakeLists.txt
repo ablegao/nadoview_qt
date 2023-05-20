@@ -20,7 +20,9 @@ set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION
                                                          "Resources")
 
 add_subdirectory(quazip)
-add_subdirectory(aws-sdk-cpp)
+add_subdirectory(aws-sdk-cpp EXCLUDE_FROM_ALL)
+# find_package(aws-sdk-cpp REQUIRED COMPONENTS core translate comprehend)
+
 find_package(
   Qt6 6.5.0
   COMPONENTS Core
@@ -110,6 +112,7 @@ target_link_libraries(
           Qt6::Xml
           QuaZip::QuaZip
           aws-cpp-sdk-core
+		  # aws-cpp-sdk-comprehend
           aws-cpp-sdk-translate)
 
 install(

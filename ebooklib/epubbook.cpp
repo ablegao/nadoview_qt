@@ -6,7 +6,7 @@ EpubBook::EpubBook(QObject *parent) {}
 
 EpubBook::~EpubBook() {
     if (m_epub != nullptr) {
-//        qDebug() << " book closed";
+        //        qDebug() << " book closed";
         m_epub->close();
     }
 }
@@ -31,17 +31,15 @@ EpubBook::~EpubBook() {
 int EpubBook::parseBook(const QString &epubfile) {
     bookPath = epubfile;
     m_epub = new QuaZip(epubfile);
-    if (!m_epub->open(QuaZip::mdUnzip))
-        return -1;
+    if (!m_epub->open(QuaZip::mdUnzip)) return -1;
 
     return parseEpub();
 }
 
 int EpubBook::parseBook(QIODevice *ioDevice) {
-//    bookPath = epubfile;
+    //    bookPath = epubfile;
     m_epub = new QuaZip(ioDevice);
-    if (!m_epub->open(QuaZip::mdUnzip))
-        return -1;
+    if (!m_epub->open(QuaZip::mdUnzip)) return -1;
 
     return parseEpub();
 }
@@ -49,7 +47,6 @@ int EpubBook::parseBook(QIODevice *ioDevice) {
 // bool EpubBook::isClose() { return m_epub == nullptr; }
 
 QString EpubBook::parseContainer() {
-
     QDomDocument doc;
     doc.setContent(openFileByUrl("META-INF/container.xml"));
     QDomElement docElem = doc.documentElement();
@@ -69,8 +66,7 @@ int EpubBook::parseEpub() {
     //  getEpubContentOpf(epubdir, &contentOpfFile);
     QDomDocument doc("ebookxml");
     contentOpfFile = parseContainer();
-    if (contentOpfFile == "")
-        return -1;
+    if (contentOpfFile == "") return -1;
     // 读取 content.opb
     QuaZipFile openxml(m_epub);
 
@@ -102,37 +98,38 @@ int EpubBook::parseEpub() {
         if (!item.isNull()) {
             tagname = item.tagName();
             switch (tags.indexOf(tagname)) {
-            case 0:
-                if (item.text() != "") {
-                    this->title = item.text();
-                }
-                break;
-            case 1:
-//                qDebug() << " 这里应该是language 标签,  " << tagname;
-                this->language = item.text();
-                break;
-            case 2:
-                this->creators << item.text();
-                break;
-            case 3:
-                this->publisher = item.text();
-                break;
-            case 4:
-                this->description = item.text();
-                break;
-            case 5:
-                this->date = item.text();
-                break;
-            case 6:
-                if (item.attribute("id") == "uuid_id") {
-                    this->uuid = item.text();
-                }
-                break;
-            case 7:
-                if (item.attribute("name") == "cover") {
-                    coverName = item.attribute("content");
-                }
-                break;
+                case 0:
+                    if (item.text() != "") {
+                        this->title = item.text();
+                    }
+                    break;
+                case 1:
+                    //                qDebug() << " 这里应该是language 标签,  "
+                    //                << tagname;
+                    this->language = item.text();
+                    break;
+                case 2:
+                    this->creators << item.text();
+                    break;
+                case 3:
+                    this->publisher = item.text();
+                    break;
+                case 4:
+                    this->description = item.text();
+                    break;
+                case 5:
+                    this->date = item.text();
+                    break;
+                case 6:
+                    if (item.attribute("id") == "uuid_id") {
+                        this->uuid = item.text();
+                    }
+                    break;
+                case 7:
+                    if (item.attribute("name") == "cover") {
+                        coverName = item.attribute("content");
+                    }
+                    break;
             }
         }
         node = node.nextSibling();
@@ -145,7 +142,7 @@ int EpubBook::parseEpub() {
     node = manifest.at(0).firstChild();
 
     tocBase = QFileInfo("/" + contentOpfFile).dir();
-//    qDebug() << tocBase;
+    //    qDebug() << tocBase;
     //  QString contentBase = QFileInfo(contentOpfFile).absolutePath();
     while (!node.isNull()) {
         item = node.toElement();
@@ -176,13 +173,13 @@ int EpubBook::parseEpub() {
 
     doc.clear();
 
-//    if (version == "2.0") {
+    //    if (version == "2.0") {
     parseTocNcx();
-//    } else if (version == "3.0") {
+    //    } else if (version == "3.0") {
     parseNavXHtml();
-//    } else {
-//        qDebug() << "不知道什么版本。无法解析这个epub" << version;
-//    }
+    //    } else {
+    //        qDebug() << "不知道什么版本。无法解析这个epub" << version;
+    //    }
 
     return 0;
 }
@@ -197,8 +194,7 @@ void EpubBook::parseNavXHtml() {
             break;
         }
     }
-    if (navFile == "")
-        return;
+    if (navFile == "") return;
 
     QDomDocument doc;
     doc.setContent(openFileByUrl(tocBase.absoluteFilePath(navFile)));
@@ -228,12 +224,11 @@ void EpubBook::parseTocNcx() {
             break;
         }
     }
-    if (ncxFile == "")
-        return;
-//    ncxFile = QDir::cleanPath(ncxFile);
+    if (ncxFile == "") return;
+    //    ncxFile = QDir::cleanPath(ncxFile);
     qDebug() << "ncx file" << ncxFile;
 
-//    QuaZipFile openxml(m_epub);
+    //    QuaZipFile openxml(m_epub);
     QDomDocument doc;
     doc.setContent(openFileByUrl(tocBase.absoluteFilePath(ncxFile)));
 
@@ -257,7 +252,7 @@ void EpubBook::parseTocNcx() {
         tableOfContent.append(entry);
     }
     doc.clear();
-//    qDebug() << "读取完毕";
+    //    qDebug() << "读取完毕";
 }
 QString EpubBook::indexToUrl(int index) {
     //    if (index < 0 || index >= tableOfContent.size()) {
@@ -272,15 +267,16 @@ QString EpubBook::indexToUrl(int index) {
 
     return getCurrentPageUrl();
 }
-int EpubBook::urlToIndex(const QString &url)
-{
+int EpubBook::urlToIndex(const QString &url) {
     for (int i = 0; i < m_Manifest.size(); i++) {
         QVariantMap item = m_Manifest.at(i).toVariantMap();
-        if (item["href"].toString() == url || url.endsWith(item["href"].toString())) {
+        if (item["href"].toString() == url ||
+            url.endsWith(item["href"].toString())) {
             for (int n = 0; n < m_Spine.size(); n++) {
                 QVariantMap spineItem = m_Spine.at(n).toVariantMap();
-//                qDebug() << " page url......" << spineItem["idref"].toString()
-//                         << item["id"].toString();
+                //                qDebug() << " page url......" <<
+                //                spineItem["idref"].toString()
+                //                         << item["id"].toString();
                 if (spineItem["idref"].toString() == "") {
                     continue;
                 }
@@ -307,6 +303,7 @@ QString EpubBook::getFirstPageUrl() {
     return "";
 }
 int EpubBook::readIndex() { return mSpineIndex; }
+
 // void EpubBook::setReadIndex(int index) { mSpineIndex = index; }
 
 QString EpubBook::nextPage() {
@@ -344,7 +341,6 @@ QString EpubBook::getCurrentPageUrl() {
     return "";
 }
 QVariantMap EpubBook::openChapter(const QString &url) {
-
     QVariantMap out;
     QString href = url;
 
@@ -397,19 +393,19 @@ QByteArray EpubBook::openFileByUrl(const QString &url) {
     if (hrefs.size() > 1) {
         href = hrefs[0];
     }
-//    qDebug() << "absoluteFilePath(href)" << absoluteFilePath(href);
+    //    qDebug() << "absoluteFilePath(href)" << absoluteFilePath(href);
 
     //    qDebug() << "尝试打开文件:" << QDir::cleanPath(tocBase.filePath(href))
     //             << href;
 
     if (m_epub->setCurrentFile(href) || m_epub->setCurrentFile(href.mid(1)) ||
-         m_epub->setCurrentFile(absoluteFilePath(href))) {
+        m_epub->setCurrentFile(absoluteFilePath(href))) {
         if (openHtml.open(QIODevice::ReadOnly)) {
             QByteArray data = openHtml.readAll();
             openHtml.close();
             return data;
         } else {
-            qDebug() << "open file errors" << url << bookPath ;
+            qDebug() << "open file errors" << url << bookPath;
         }
 
         //        openHtml.close();
