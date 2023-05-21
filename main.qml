@@ -248,9 +248,9 @@ Window {
     	                    console.log(result);
     	            });
     	            console.log("find index id",tableOfContent.urlToIndex(url));
-    	            console.log(root.bookName, tableOfContent.readIndex());
+    	            console.log(root.bookName, tableOfContent.readIndex(),tableOfContent.getIndexOfTable());
 					userdata.read(root.bookUrl,root.bookName,tableOfContent.readIndex(),0);
-					tocListView.currentIndex = tableOfContent.readIndex();
+					tocListView.currentIndex = tableOfContent.getIndexOfTable();
     	        }
 
     	    }

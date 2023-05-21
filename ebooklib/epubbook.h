@@ -46,6 +46,7 @@ class EpubBook : public IBook {
         virtual QString prevPage() override;
         QString indexToUrl(int index) override;
         int urlToIndex(const QString &url) override;
+        Q_INVOKABLE int getIndexOfTable() override;
         // int getTableOfContentIndex() override;
         QString getCurrentPageUrl() override;
         QString absoluteFilePath(const QString &u) override;

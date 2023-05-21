@@ -52,7 +52,7 @@ class IBook : public QObject {
         //    Q_PROPERTY(
         //        int readIndex READ readIndex WRITE setReadIndex NOTIFY
         //        readIndexChanged)
-
+        virtual int getIndexOfTable() = 0;
         virtual int readIndex() = 0;
         //    virtual void setReadIndex(int index) = 0;
 

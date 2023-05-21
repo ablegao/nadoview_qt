@@ -55,7 +55,9 @@ class TableOfContent : public QAbstractListModel {
         // Q_INVOKABLE int getMenuIndex();
         Q_INVOKABLE QByteArray openPage(const QString &url);
         Q_INVOKABLE int readIndex();
-        // Q_INVOKABLE int getTableOfContentIndex();
+        // 获取当前章节在目录中的索引
+        Q_INVOKABLE int getIndexOfTable();
+        //
         Q_INVOKABLE bool useMarkDown();
         //    void requestStarted(QWebEngineUrlRequestJob *request) override;
         int screenWidth, screenHeight;

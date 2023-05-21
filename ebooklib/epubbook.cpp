@@ -303,7 +303,15 @@ QString EpubBook::getFirstPageUrl() {
     return "";
 }
 int EpubBook::readIndex() { return mSpineIndex; }
-
+int EpubBook::getIndexOfTable() {
+    QString url = getCurrentPageUrl();
+    for (int i = 0; i < tableOfContent.size(); i++) {
+        if (tableOfContent.at(i).toMap()["chapterUrl"].toString() == url) {
+            return i;
+        }
+    }
+    return 0;
+}
 // void EpubBook::setReadIndex(int index) { mSpineIndex = index; }
 
 QString EpubBook::nextPage() {

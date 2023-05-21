@@ -238,7 +238,7 @@ int TableOfContent::urlToIndex(const QString &url) {
 }
 int TableOfContent::readIndex() { return mBook->readIndex(); }
 // int TableOfContent::getMenuIndex() { return mBook->readIndex(); }
-
+int TableOfContent::getIndexOfTable() { return mBook->getIndexOfTable(); }
 QString TableOfContent::absoluteFilePath(const QString &u) {
     return mBook->absoluteFilePath(u);
 }
