@@ -1,6 +1,7 @@
 #include "userdata.h"
 
 UserData::UserData(QObject *parent) : QObject{parent} {
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     QDir userDir =
         QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     qDebug() << " out debug" << userDir;
@@ -8,99 +9,91 @@ UserData::UserData(QObject *parent) : QObject{parent} {
     //    homeDir(userDir);
     dataFile = userDir.absoluteFilePath("mybook.sqlite3");
 
-    qDebug() << "data file:::" << dataFile;
-    if (!QFile::exists(dataFile)) {
-        qDebug() << "初始化文件";
-
-        // 如果库文件不存在，创建库文件和表
-        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-        db.setDatabaseName(dataFile);
-        // 打开数据库
-        if (!db.open()) {
-            qDebug() << "Failed to open database:" << db.lastError().text();
-            return;
-        }
-
-        // 创建book表
-        QSqlQuery query(db);
-        if (!query.exec("CREATE TABLE book ("
-                        "id TEXT PRIMARY KEY,"
-                        "book_name TEXT,"
-                        "auther TEXT,"
-                        "book_url TEXT,"
-                        "book_image BLOB,"
-                        "lang TEXT,"
-                        "last_read_index INTEGER,"
-                        "last_read_scroll_number INTEGER,"
-                        "last_read_time DATETIME"
-                        ")")) {
-            qDebug() << "Failed to create book table:"
-                     << query.lastError().text();
-            return;
-        }
-
-        // 创建write_label表
-        if (!query.exec("CREATE TABLE write_label ("
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                        "book_id TEXT,"
-                        "read_index INTEGER,"
-                        "label_source TEXT,"
-                        "label_color TEXT,"
-                        "label_postil TEXT,"
-                        "FOREIGN KEY(book_id) REFERENCES book(id)"
-                        ")")) {
-            qDebug() << "Failed to create write_label table:"
-                     << query.lastError().text();
-            return;
-        }
-
-        //        if (!query.exec("CREATE TABLE book_list ("
-        //                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        //                        "book_id TEXT,"
-        //                        "book_name TEXT,"
-        //                        "book_url TEXT,"
-        //                        "book_image BLOB,"
-        //                        "last_read_time DATETIME," // 新增的时间字段
-        //                        "FOREIGN KEY(book_id) REFERENCES book(id)"
-        //                        ")")) {
-        //            qDebug() << "Failed to create book_list table:" <<
-        //            query.lastError().text(); return;
-        //        }
-
-        // 创建settings表
-        if (!query.exec("CREATE TABLE settings (json_settings TEXT)")) {
-            qDebug() << "Failed to create settings table:"
-                     << query.lastError().text();
-            return;
-        }
-
-        query.prepare("SELECT * FROM settings");
-        if (!query.exec()) {
-            qDebug() << "Failed to query settings:" << query.lastError().text();
-            return;
-        }
-
-        // 如果settings表为空,初始化数据
-        if (!query.next()) {
-            query.prepare(
-                "INSERT INTO settings (json_settings) VALUES (:data)");
-            QJsonObject obj{
-                {"book_dirs", QJsonArray{QDir::homePath() + "/Books",
-                                         "/storage/emulated/0/Download"}},
-                {"font_size", 16}};
-            query.bindValue(":data", QJsonDocument(obj).toJson());
-            if (!query.exec()) {
-                qDebug() << "Failed to init settings:"
-                         << query.lastError().text();
-                return;
-            }
-        }
-        bookSearch();
-    } else {
-        // 读取数据库文件
-        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-        db.setDatabaseName(dataFile);
+    db.setDatabaseName(dataFile);
+    // 如果库文件不存在，创建库文件和表
+    // 打开数据库
+    if (!db.open()) {
+        qDebug() << "Failed to open database:" << db.lastError().text();
+        return;
     }
+
+    // 创建book表
+    QSqlQuery query(db);
+    if (!query.exec("CREATE TABLE IF NOT EXISTS book ("
+                    "id TEXT PRIMARY KEY,"
+                    "book_name TEXT,"
+                    "auther TEXT,"
+                    "book_url TEXT,"
+                    "book_image BLOB,"
+                    "lang TEXT,"
+                    "tags TEXT,"
+                    "last_read_index INTEGER,"
+                    "last_read_scroll_number INTEGER,"
+                    "last_read_time DATETIME"
+                    ")")) {
+        qDebug() << "Failed to create book table:" << query.lastError().text();
+    }
+
+    // 创建write_label表
+    if (!query.exec("CREATE TABLE IF NOT EXISTS write_label ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    "book_id TEXT,"
+                    "read_index INTEGER,"
+                    "label_source TEXT,"
+                    "label_color TEXT,"
+                    "label_postil TEXT,"
+                    "FOREIGN KEY(book_id) REFERENCES book(id)"
+                    ")")) {
+        qDebug() << "Failed to create write_label table:"
+                 << query.lastError().text();
+    }
+
+    //        if (!query.exec("CREATE TABLE book_list ("
+    //                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    //                        "book_id TEXT,"
+    //                        "book_name TEXT,"
+    //                        "book_url TEXT,"
+    //                        "book_image BLOB,"
+    //                        "last_read_time DATETIME," // 新增的时间字段
+    //                        "FOREIGN KEY(book_id) REFERENCES book(id)"
+    //                        ")")) {
+    //            qDebug() << "Failed to create book_list table:" <<
+    //            query.lastError().text(); return;
+    //        }
+
+    // 创建settings表
+    if (!query.exec(
+            "CREATE TABLE IF NOT EXISTS settings (json_settings TEXT)")) {
+        qDebug() << "Failed to create settings table:"
+                 << query.lastError().text();
+    }
+
+    query.prepare("SELECT * FROM settings");
+    if (!query.exec()) {
+        qDebug() << "Failed to query settings:" << query.lastError().text();
+    }
+
+    // 如果settings表为空,初始化数据
+    if (!query.next()) {
+        query.prepare("INSERT INTO settings (json_settings) VALUES (:data)");
+        QJsonObject obj{
+            {"book_dirs", QJsonArray{QDir::homePath() + "/Books",
+                                     "/storage/emulated/0/Download"}},
+            {"font_size", 16}};
+        query.bindValue(":data", QJsonDocument(obj).toJson());
+        if (!query.exec()) {
+            qDebug() << "Failed to init settings:" << query.lastError().text();
+        }
+    }
+    // 检查sqlite3 库中， tags表是否存在，如果不存在则创建
+
+    if (!query.exec("CREATE TABLE IF NOT EXISTS tags ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    "tag_name TEXT,"
+                    "tag_color TEXT"
+                    ")"))
+        qDebug() << "Failed to create book table:" << query.lastError().text();
+    // bookSearch();
 }
 
 QString UserData::md5(const QString &str) {
@@ -121,9 +114,10 @@ QJsonObject UserData::openBook(const QString &bookPath, const QString &bookName,
     QString bookId = md5(bookName);
 
     //    // 如果记录存在,更新last_read_time字段
-    //    query.prepare("UPDATE book_list SET last_read_time = :last_read_time
-    //    WHERE book_id = :book_id"); query.bindValue(":last_read_time",
-    //    QDateTime::currentDateTime()); query.bindValue(":book_id", bookId); if
+    //    query.prepare("UPDATE book_list SET last_read_time =
+    //    :last_read_time WHERE book_id = :book_id");
+    //    query.bindValue(":last_read_time", QDateTime::currentDateTime());
+    //    query.bindValue(":book_id", bookId); if
     //    (!query.exec()) {
     //        qDebug() << "Failed to update book_list record:" <<
     //        query.lastError().text();
@@ -240,7 +234,8 @@ void UserData::read(const QString &bookPath, const QString &bookName,
         "last_read_time = :last_read_time WHERE id = :id");
     // query.prepare(
     //     "INSERT OR REPLACE INTO book (id, book_name, book_url, "
-    //     "last_read_index, last_read_scroll_number, last_read_time) values "
+    //     "last_read_index, last_read_scroll_number, last_read_time) values
+    //     "
     //     "(:id, :book_name, :book_url, :last_read_index, "
     //     ":last_read_scroll_number, :last_read_time)");
     query.bindValue(":id", bookId);
@@ -266,7 +261,8 @@ QJsonArray UserData::books(int count) {
                 .arg(count));
     } else {
         query.prepare(
-            "SELECT * FROM book ORDER BY last_read_time DESC,book_name DESC");
+            "SELECT * FROM book ORDER BY last_read_time DESC,book_name "
+            "DESC");
     }
     if (!query.exec()) {
         qDebug() << "Failed to query book_list:" << query.lastError().text();
@@ -341,7 +337,8 @@ void UserData::addBook(const QString &bookUrl) {
         query.bindValue(":book_url", bookUrl);
         query.bindValue(":auther", book->getCreators().join(","));
         query.bindValue(":lang", book->getLanguage());
-        //                    qDebug() << "search epub of name:" << book->title;
+        //                    qDebug() << "search epub of name:" <<
+        //                    book->title;
 
         QByteArray imgArr = book->openFileByUrl(book->coverImg);
         if (imgArr.size() > 0) {
@@ -350,7 +347,8 @@ void UserData::addBook(const QString &bookUrl) {
             image.loadFromData(imgArr);
             // 将QImage转换为jpeg格式
             // 将QImage转换为jpeg格式
-            //                    QImage jpegImage = image.convertToFormat();
+            //                    QImage jpegImage =
+            //                    image.convertToFormat();
 
             // 获取图片大小
             int width = image.width();
@@ -443,8 +441,8 @@ bool UserData::checkPermission(const QString &permission) {
 bool UserData::requestPermission(const QString &permission) {
 #ifdef Q_OS_ANDROID
     auto result = QtAndroidPrivate::requestPermission(permission);
-    //                      .then([](QtAndroidPrivate::PermissionResult result)
-    //                      { return result; });
+    //                      .then([](QtAndroidPrivate::PermissionResult
+    //                      result) { return result; });
     //    result.waitForFinished();
     auto out = result.result();
     qDebug() << "request out .:::::" << out;
