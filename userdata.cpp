@@ -1,6 +1,9 @@
 #include "userdata.h"
 
-UserData::UserData(QObject *parent) : QObject{parent} {
+#include "QtCore/qjsonobject.h"
+#include "QtSql/qsqldatabase.h"
+#include "userdatabookworks.h"
+QSqlDatabase UserData::connectDB() {
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     QDir userDir =
         QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
@@ -8,17 +11,17 @@ UserData::UserData(QObject *parent) : QObject{parent} {
     //    QString dataPath  =
     //    homeDir(userDir);
     dataFile = userDir.absoluteFilePath("mybook.sqlite3");
-
     db.setDatabaseName(dataFile);
-    // 如果库文件不存在，创建库文件和表
-    // 打开数据库
-    if (!db.open()) {
-        qDebug() << "Failed to open database:" << db.lastError().text();
-        return;
-    }
+    db.open();
+    return db;
+}
+
+UserData::UserData(QObject *parent) : QObject{parent} {
+    QSqlDatabase db = connectDB();
 
     // 创建book表
     QSqlQuery query(db);
+
     if (!query.exec("CREATE TABLE IF NOT EXISTS book ("
                     "id TEXT PRIMARY KEY,"
                     "book_name TEXT,"
@@ -94,8 +97,17 @@ UserData::UserData(QObject *parent) : QObject{parent} {
                     ")"))
         qDebug() << "Failed to create book table:" << query.lastError().text();
     // bookSearch();
+    db.close();
 }
 
+void UserData::booksAsync(const QString &tag) {
+    UserDataBookWorks *work = new UserDataBookWorks();
+    work->tag = tag;
+    //    connect(work,&UserDataBookWorks::fetchBook,this,&UserData::fetchBook);
+    connect(work, &UserDataBookWorks::fetchBook, this, &UserData::fetchBook);
+    connect(work, &UserDataBookWorks::tags, this, &UserData::tags);
+    QThreadPool::globalInstance()->start(work);
+}
 QString UserData::md5(const QString &str) {
     QCryptographicHash hash(QCryptographicHash::Md5);
     hash.addData(str.toUtf8());
@@ -107,8 +119,10 @@ QJsonObject UserData::openBook(const QString &bookPath, const QString &bookName,
                                const QString &language) {
     qDebug() << "userData.openBook" << bookPath << bookName;
     // 连接数据库
-    QSqlDatabase db = QSqlDatabase::database();
+    QSqlDatabase db = connectDB();
+
     QSqlQuery query(db);
+    query.exec("PRAGMA journal_mode = WAL;");
 
     // 查询书籍记录
     QString bookId = md5(bookName);
@@ -127,6 +141,7 @@ QJsonObject UserData::openBook(const QString &bookPath, const QString &bookName,
     query.bindValue(":id", bookId);
     if (!query.exec()) {
         qDebug() << "Failed to query book record:" << query.lastError().text();
+        db.close();
         return QJsonObject();
     }
 
@@ -163,8 +178,10 @@ QJsonObject UserData::openBook(const QString &bookPath, const QString &bookName,
         }
         return obj;
     }
+    db.close();
     // 没有找到记录时,向book中插入新的记录
     addBook(bookPath);
+
     return QJsonObject();
 }
 
@@ -172,15 +189,17 @@ QJsonObject UserData::openBook(const QString &bookPath, const QString &bookName,
 void UserData::read(const QString &bookPath, const QString &bookName,
                     int last_read_index, int last_read_scroll_number) {
     // 连接数据库
-    QSqlDatabase db = QSqlDatabase::database();
-    QSqlQuery query(db);
+    QSqlDatabase db = connectDB();
 
+    QSqlQuery query(db);
+    query.exec("PRAGMA journal_mode = WAL;");
     // 查询书籍记录
     QString bookId = md5(bookName);
     query.prepare("SELECT last_read_index FROM book WHERE id = :id");
     query.bindValue(":id", bookId);
     if (!query.exec()) {
         qDebug() << "Failed to query book record:" << query.lastError().text();
+        db.close();
         return;
     }
 
@@ -247,12 +266,13 @@ void UserData::read(const QString &bookPath, const QString &bookName,
     if (!query.exec()) {
         qDebug() << "Failed to update book record:" << query.lastError().text();
     }
+    db.close();
 }
 
 QJsonArray UserData::books(int count) {
-    QSqlDatabase db = QSqlDatabase::database();
+    QSqlDatabase db = connectDB();
     QSqlQuery query(db);
-
+    query.exec("PRAGMA journal_mode = WAL;");
     // 查询book_list表,按last_read_time降序排序
     if (count > 0) {
         query.prepare(
@@ -266,6 +286,7 @@ QJsonArray UserData::books(int count) {
     }
     if (!query.exec()) {
         qDebug() << "Failed to query book_list:" << query.lastError().text();
+        db.close();
         return QJsonArray();
     }
 
@@ -297,19 +318,19 @@ QJsonArray UserData::books(int count) {
 
         array.append(obj);
     }
-
+    db.close();
     return array;
 }
+
 void UserData::addBook(const QString &bookUrl) {
     EpubBook *book = new EpubBook();
     book->parseBook(bookUrl);
     if (book->title == "") return;
-
-    QSqlDatabase db = QSqlDatabase::database();
-
+    QSqlDatabase db = connectDB();
     // 检查book_id是否存在,如果存在只更新book_url
     QString bookId = md5(book->title);
     QSqlQuery query(db);
+    query.exec("PRAGMA journal_mode = WAL;");
     query.prepare("SELECT * FROM book WHERE id = :book_id");
     query.bindValue(":book_id", bookId);
     if (query.exec() && query.next()) {
@@ -324,6 +345,7 @@ void UserData::addBook(const QString &bookUrl) {
     } else {
         if (book->title == "") {
             qDebug() << "IS empty title book" << book->title << bookUrl;
+            db.close();
             return;
         }
         // 插入新记录
@@ -377,15 +399,47 @@ void UserData::addBook(const QString &bookUrl) {
 
         delete book;
     }
+    db.close();
 }
-void UserData::bookSearch() {
-    QSqlDatabase db = QSqlDatabase::database();
+QJsonObject UserData::getSettings() {
+    QSqlDatabase db = connectDB();
     QSqlQuery query(db);
-    query.prepare("SELECT json_settings FROM settings");
-    if (!query.exec()) {
-        qDebug() << "Failed to query settings:" << query.lastError().text();
-        return;
+    query.exec("PRAGMA journal_mode = WAL;");
+
+    query.prepare("SELECT json_settings FROM settings LIMIT 1");
+    query.exec();
+    if (query.next()) {
+        QJsonDocument doc =
+            QJsonDocument::fromJson(query.value(0).toString().toUtf8());
+        db.close();
+        return doc.object();
     }
+    qDebug() << "out.........";
+    db.close();
+    return QJsonObject();
+}
+
+void UserData::setSettings(QJsonObject config) {
+    QSqlDatabase db = connectDB();
+    QSqlQuery query(db);
+    query.exec("PRAGMA journal_mode = WAL;");
+
+    query.prepare("update settings set json_settings=:config ");
+    query.bindValue(":config", QJsonDocument(config).toJson());
+    if (!query.exec()) {
+        qDebug() << "Failed to insert book_list record:"
+                 << query.lastError().text();
+    }
+    db.close();
+    return;
+}
+
+void UserData::bookSearch() {
+    QSqlDatabase db = connectDB();
+    QSqlQuery query(db);
+    query.exec("PRAGMA journal_mode = WAL;");
+
+    query.prepare("SELECT json_settings FROM settings");
 
     if (query.next()) {
         QJsonDocument doc =
@@ -427,6 +481,7 @@ void UserData::bookSearch() {
             }
         }
     }
+    db.close();
 }
 
 bool UserData::checkPermission(const QString &permission) {

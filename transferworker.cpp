@@ -1,4 +1,5 @@
 #include "transferworker.h"
+#include "QtCore/qminmax.h"
 
 void TransferWorker::doWork(const QString &text, const QString &fromLang,
                             const QString &toLang) {
@@ -29,7 +30,7 @@ void TransferWorker::doWork(const QString &text, const QString &fromLang,
 }
 
 bool TransferWorker::containsChinese(const QString &text) {
-    int textCount = qMax(text.length(), 10);
+    int textCount = qMin(text.length(), 10);
 
     for (int i = 0; i < textCount; i++) {
         if (text[i].unicode() >= 0x4e00 && text[i].unicode() <= 0x9fa5) {

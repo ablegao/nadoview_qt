@@ -4,6 +4,8 @@ import QtQuick.Controls 2.15
 import com.tap2happy.nadoview 1.0
 //import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
+import QtQuick.Layouts
+import Qt.labs.platform
 
 import QtWebView 1.1
 //import QtWebEngine 1.10
@@ -88,14 +90,15 @@ Window {
 
 //        pageView.text = tableOfContent.openPage(url);
         pageView.url = tableOfContent.hosts()+ url;
-        if(read.last_read_scroll_number) onstartScrollTo = read.last_read_scroll_number;
+		if(read.last_read_scroll_number) onstartScrollTo = read.last_read_scroll_number;
+		book_lists.close();
 //        flick.contentY = onstartScrollTo;
     }
 
     property var pageRows:[];
     function bookChapterReaded(obj,index){
         root.pageIndex=index;
-        userdata.read(root.bookUrl,root.bookName,index,0);
+//        userdata.read(root.bookUrl,root.bookName,index,0);
 
     }
     function onFileOpen(url){
@@ -381,7 +384,7 @@ Window {
     	                }
     	            }
 
-
+                    // settings.
     	            Text {
     	                width: parent.cellHeight
     	                height: parent.cellHeight
@@ -394,35 +397,164 @@ Window {
     	                MouseArea {
     	                    anchors.fill: parent
     	                    onClicked:function() {
-
-//  	                         // 下一页
-//  	                          var u= tableOfContent.nextPage();
-//  	                          if(u!=="")
-//  	                          pageView.url = "mybook://book.local"+u;
-//  	                          root.onstartScrollTo = 0;
+                                setting_config.open();
+//
     	                    }
     	                }
-    	            }
+					}
 
-//  	              Text {
-//  	                  width: parent.cellHeight
-//  	                  height: parent.cellHeight
-////	                            radius: 2
-//  	                  font.pixelSize: parent.cellHeight
-//  	                  text:''
+  	              Text {
+  	                  width: parent.cellHeight
+  	                  height: parent.cellHeight
+//	                            radius: 2
+  	                  font.pixelSize: parent.cellHeight
+  	                  text:''
 
-////	                            border.width:1
-//  	                  font.family: iconFont.name
-//  	                  MouseArea {
-//  	                      anchors.fill: parent
-//  	                      onClicked:function() {
-//  	                          screen_win.setSource("qrc:/nadoview/books.qml",{});
-//  	                      }
-//  	                  }
-//  	              }
+//	                            border.width:1
+  	                  font.family: iconFont.name
+  	                  MouseArea {
+  	                      anchors.fill: parent
+  	                      onClicked:function() {
+							  book_lists.open();
+  	                      }
+  	                  }
+  	              }
     	        }
     	    }
 		}
+
+    Popup {
+        id: setting_config
+        modal:true
+        focus:true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width:parent.width
+        height:parent.height - webview_btns.height
+
+        // 设置界面的主要内容
+        Item {
+            anchors.fill: parent
+
+
+            Column {
+                spacing: 10
+
+                // OPNEAI API KEY
+                Row {
+                    spacing: 10
+
+                    Text {
+                        text: "OPNEAI API KEY:"
+                        width: 150
+                    }
+
+                    TextField {
+                        id: apiKeyField
+                        width:400
+                        placeholderText: "Enter API Key"
+                    }
+                }
+
+                // Font Size
+                Row {
+                    spacing: 10
+
+                    Text {
+                        text: "Font Size:"
+                        width: 150
+                    }
+
+                    SpinBox {
+                        id: fontSizeSpinBox
+                        from: 1
+                        to: 100
+                        value: 16
+                    }
+                }
+
+                // Book Dir
+                Row {
+                    spacing: 10
+
+                    Text {
+                        text: "Book Dir:"
+                        width: 150
+                    }
+
+                    ListView{
+                        id:bookDir
+                        width:400
+                        height:100
+                        model:ListModel{
+                        }
+                        delegate: Text {
+                                text: dir_path
+                        }
+                    }
+                }
+
+                Row {
+                    spacing: 10
+
+                    Text {
+                        text: "Book Dir:"
+                        width: 150
+                    }
+                    Button{
+                        text:"Select Book Folder"
+                        onClicked: function(){
+                            fileDialog.open();
+                        }
+                    }
+
+                    FolderDialog {
+                        id: fileDialog
+                        folder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+                        onAccepted:function(){
+                            var path= fileDialog.currentFolder.toString();
+                            if(path.substring(0,7)==="file://"){
+                                path = path.substring(7);
+                            }
+                            for(var i=0;i<bookDir.model.count;i++){
+                                var old = bookDir.model.get(i);
+                                if(old['dir_path']=== path){
+                                    console.log("path exists: "+ path);
+                                    return;
+                                }
+                            }
+                            bookDir.model.append({"dir_path":path});
+                        }
+                    }
+                }
+
+                Row{
+                    spacing: 10
+                    Button {
+                        text: "Save"
+                        onClicked: {
+                            var apiKey = apiKeyField.text;
+                            var fontSize = fontSizeSpinBox.value;
+                            // 在这里保存设置值
+                            console.log("API Key:", apiKey);
+                            console.log("Font Size:", fontSize);
+                            console.log("Book Dir:", bookDir);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 底部按钮
+
+        onOpened: function(){
+            var config = userdata.getSettings();
+            apiKeyField.text = config.openai_api_key;
+            fontSizeSpinBox.value = config.font_size;
+            for(var item in config.book_dirs){
+                bookDir.model.append({"dir_path":config.book_dirs[item]});
+            }
+        }
+    }
     Popup {
         id: painterBox
         modal: true
@@ -651,7 +783,37 @@ Window {
         }
     }
 
+	Popup{
+		id:book_lists
+		width:root.width
+		height:root.height
 
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+		Rectangle {
+            anchors.fill: parent
+            color: "#fffffe"
+		}
+		onOpened:function(){
+            books_loader.setSource("qrc:/nadoview/books.qml",{userdata:userdata,appSingle:appSingle});
+            console.log("on opened....");
+		}
+		Loader{
+			id:books_loader
+			anchors.fill:parent
+			// source:"books.qml"
+		    asynchronous: true
+				
+		}
+        Shortcut {
+            sequence: "Esc"
+            onActivated: {
+                console.log("Esc: cancel a few things")
+                book_lists.close()
+            }
+        }
+	}
     Timer {
             id: selectionTimer
             interval: 800 // 1 second delay

@@ -2,7 +2,10 @@
 #define USERDATA_H
 
 #include <ebooklib/epubbook.h>
-
+#include "QtCore/qjsonarray.h"
+#include "QtCore/qjsonobject.h"
+#include "QtCore/qtmetamacros.h"
+#include "userdatabookworks.h"
 #include <QBuffer>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -18,6 +21,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStandardPaths>
+#include <QThreadPool>
 
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
@@ -27,6 +31,7 @@
 class UserData : public QObject {
         Q_OBJECT
     public:
+
         /*
     使用QT 创建一个sqlite 文件库，存储在路径 dataFile 下。
     当dataFile不存在时， 初始化这个sqlite文件，并创建下面几张表
@@ -89,15 +94,23 @@ class UserData : public QObject {
         Q_INVOKABLE void read(const QString &bookPath, const QString &bookName,
                               int last_read_index, int last_read_scroll_number);
         Q_INVOKABLE QJsonArray books(int count = 0);
+
+
         Q_INVOKABLE void addBook(const QString &bookPath);
         Q_INVOKABLE void bookSearch();
         Q_INVOKABLE bool checkPermission(const QString &permission);
         Q_INVOKABLE bool requestPermission(const QString &permission);
+        Q_INVOKABLE void booksAsync(const QString &tag = "");
+        Q_INVOKABLE QJsonObject getSettings();
+        Q_INVOKABLE void setSettings(QJsonObject);
     signals:
         void readPageChanged(QJsonArray labeHistory);
-
+        void fetchBook(QJsonObject);
+        void tags(QJsonArray);
     private:
         QString dataFile;
+        QSqlDatabase connectDB();
+        void closeDB();
         //    QSqlDatabase db;
 };
 

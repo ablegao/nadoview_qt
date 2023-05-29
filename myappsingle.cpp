@@ -1,6 +1,3 @@
 #include "myappsingle.h"
 
-MyAppSingle::MyAppSingle()
-{
-
-}
+MyAppSingle::MyAppSingle() {}

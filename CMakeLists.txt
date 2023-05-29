@@ -48,6 +48,8 @@ qt_add_executable(
   openchatmodel.cpp
   userdata.h
   userdata.cpp
+  userdatabookworks.h
+  userdatabookworks.cpp
   painterimage.h
   painterimage.cpp
   tableofcontent.h
@@ -75,7 +77,6 @@ qt_add_qml_module(
   VERSION
   1.0
   QML_FILES
-  mainwin.qml
   main.qml
   books.qml)
 
