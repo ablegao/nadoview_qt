@@ -3,5 +3,15 @@
         <file>fonts/AlibabaPuHuiTi-2-55-Regular.ttf</file>
         <file>fonts/CN-Bold.ttf</file>
         <file>fonts/fontawesome-webfont.ttf</file>
+        <file>books.qml</file>
+        <file>mainwin.qml</file>
+        <file>settings.qml</file>
+        <file>res/book.js</file>
+        <file>res/jquery-ui.min.js</file>
+        <file>res/jquery-ui.min.css</file>
+        <file>res/jquery-ui.structure.min.css</file>
+        <file>res/jquery-ui.theme.min.css</file>
+        <file>res/jquery.js</file>
+        <file>res/rloader1.5.4_fin.js</file>
     </qresource>
 </RCC>

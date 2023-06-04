@@ -1,42 +1,57 @@
 import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick.Controls
 //import QtNetwork
-import NadoView 1.0
+import com.tap2happy.nadoview 1.0
 //import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
+import QtQuick.Layouts
+import Qt.labs.platform
 
-//import QtWebView 1.1
 
+import QtWebView 1.1
+import QtWebChannel 1.5
 
 Window {
     id: root
-    visible: true
-    width: 760
-    height: 900
-    title: "Nado View"
-
+    title: "Nado View 0.1 Preview"
     property string lang: "cn"
     property int screenWidthThreshold: 1600
     property int itemsPerPage: width >= screenWidthThreshold ? 2 : 1
     property string pageHref:"";
     property string pageDesc:"";
     property  string bookName: ""
-//    property  string bookUrl: ""
+    property  string bookUrl: ""
     property  int  pageIndex: 0;
     property int onstartScrollTo: 0
-//    property var books : userdata.books()
+    property int pos_y:0
+    visible: true
+	
+    width: 1060
+    height: 900
     UserData{
         id:userdata
     }
-//    FontLoader {
-//            id: customFont
-//            source: "qrc:/fonts/AlibabaPuHuiTi-2-55-Regular.ttf" // 修改为自定义字体文件的相对路径
+    TableOfContent {
+        id:tableOfContent
+        onSelectedText: function(text){
+            transfer_box_text.text=text;
+//            transferBox.open();
+//            myTransfer.transferText(text);
+        }
+    }
+//    AwsTransfer {
+//        id:myTransfer
+//        onResultReady: function(out){
+//			//            console.log("transfer out:",out);
+//			// if(out.length<=4 || out.split(" ").length ==1){
+//			//
+//            // 	transfer_box_text.text = "<a href='eudic://dict/"+out+"'>" +out+"</a>";
+//			// 	return;
+//			// }
+//            transfer_box_text.text = out;
+//        }
 //    }
 
-//    FontLoader{
-//        id:customBoldFont
-//        source:"qrc:/fonts/CN-Bold.ttf"
-//    }
 
     FontLoader{
         id:iconFont
@@ -46,21 +61,21 @@ Window {
     //:/
 
     function bookOpenFinishd(obj){
+        console.log(JSON.stringify(obj));
         root.title = "Currently using NadoView 0.1 to read《" + obj.book_name + "》";
         root.bookName = obj.book_name;
         root.lang = obj.lang;
-        var source = "image://mybook/"+obj.coverImg+"?180x240";
+//        var source = "image://mybook/"++"?180x240";
 //        console.log("image......",obj.firstPageUrl,source);
-        bookIcon.source = source;
-        runingChatModel.addMessage("Reading "+obj.name,"system");
-
+        bookIcon.source = tableOfContent.hosts()+obj.coverImg;
+        runingChatModel.addMessage("Use the content in \""+obj.book_name+"\" to answer my question.","system");
 //        if(tableOfContent.useMarkDown()){
 //            pageView.textFormat = Text.MarkdownText;
 //        }
-        tableOfContent.setSize(flick.width,flick.height);
+        tableOfContent.setSize(pageView.width,pageView.height);
         tocListView.currentIndex = 0;
-        var read = userdata.openBook(obj.book_name);
-        console.log("========= open book",JSON.stringify(read));
+        var read = userdata.openBook(obj.bookPath,obj.book_name,obj.auther,obj.lang);
+		root.bookUrl = obj.bookPath;
 //        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
 //        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
         var url  = obj.firstPageUrl;
@@ -71,306 +86,454 @@ Window {
         for (var i = 0; i < pathArray.length - 1; i++) {
           directoryPath += pathArray[i] + '/';
         }
-        pageView.baseUrl = "image://mybook"+directoryPath;
+//        pageView.baseUrl = "image://mybook"+directoryPath;
 
 
-        pageView.text = tableOfContent.openPage(url);
-        onstartScrollTo = read.last_read_scroll_number;
-        flick.contentY = onstartScrollTo;
+//        pageView.text = tableOfContent.openPage(url);
+        pageView.url = tableOfContent.hosts()+ url;
+        console.log(pageView.url);
+		if(read.last_read_scroll_number) onstartScrollTo = read.last_read_scroll_number;
+		book_lists.close();
+//        flick.contentY = onstartScrollTo;
     }
 
     property var pageRows:[];
     function bookChapterReaded(obj,index){
         root.pageIndex=index;
-        userdata.read(root.bookName,index,0);
+//        userdata.read(root.bookUrl,root.bookName,index,0);
 
+    }
+    function onFileOpen(url){
+        tableOfContent.openBook(url);
+
+    }
+    //没有打开的文件时
+    function noOpenFile(){
+        var books = userdata.books(1);
+        console.log(JSON.stringify(books));
+        tableOfContent.openBook(books[0].book_url);
     }
     Component.onCompleted: function(){
         console.log("BOOK address:",root.bookUrl);
-        var books = userdata.books(1);
+//        var books = userdata.books(1);
 //        book_list_grid.model = books;
         tableOfContent.onBookOpenFinishd.connect(bookOpenFinishd);
         tableOfContent.onOpenPageFinishd.connect(bookChapterReaded);
-        if(bookUrl!=""){
+        appSingle.onFileOpend.connect(onFileOpen);
+        appSingle.onNoOpenFile.connect(noOpenFile);
 
-            tableOfContent.openBook(bookUrl);
-            userdata.addBook(bookPath);
-        }
-        else tableOfContent.openBook(books[0].book_url);
+	}
+		Rectangle{
+    	    id:leftBox
+    	    //modal: true
+    	    //focus: true
+    	    //closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+			width:300
+            y:pos_y
+			color:"#fffffe"
+            height:root.height-pos_y
+//  	      Rectangle {
+//  	          anchors.fill: parent
+//  	          color: "#fffffe"
+//  	          radius: 10
+//  	      }
+	  	    function open(){
+				if(width==300){
+					width=0;
+					root.width = root.width-300;	
+					root.x = root.x+300;
+				}else{
+					width = 300;
+					root.width = root.width+300;
+					root.x = root.x-300;
+				}
+	  	    }
+    	    Column{
+    	        Rectangle{
+    	            id:bookIconBox
+    	            width:leftBox.width-20
+    	            height:200 +20
+    	            radius: 10
+    	            Image{
+    	                id:bookIcon
+//  	                  source:""
 
-    }
+    	                anchors.margins: 10
+    	                anchors.fill: parent
+//  	                  width:parent.width-40
+//  	                  height:parent.height-40
+    	                fillMode: Image.PreserveAspectFit
+//  	                  anchors.centerIn: parent
+
+    	            }
+    	        }
+    	        ListView {
+    	            id: tocListView
+//  	              anchors.margins: 10
+    	            width:leftBox.width
+    	            height:leftBox.height - bookIconBox.height -20
+    	            model: tableOfContent
+    	            delegate:  Item{
+    	                width: tocListView.width
+    	                height: textItem.implicitHeight
+    	                Text {
+    	                    id:textItem
+    	                    text: chapterName
+    	                    font.pixelSize: 16
+    	                    padding: 8
+    	                    width:parent.width
+    	                    wrapMode:Text.Wrap
+    	                }
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: function(){
+
+    	                        tocListView.currentIndex = index;
+    	                        pageView.url = tableOfContent.hosts()+chapterUrl;
+                                console.log(pageView.url);
+    	                    }
+    	                }
+    	            }
+    	            highlight: Rectangle {
+    	                color: "#bae8e8"
+    	                width:leftBox.width-20
+    	            }
+    	            highlightMoveDuration:100
+    	            focus: true
+    	            clip:true
+
+    	        }
+    	    }
+    	}
 
 
-    Rectangle{
-        id:centerBox
-        color:"#fffffe"
+    	Rectangle{
+    	    id:centerBox
+    	    color:"#fffffe"
+			width:parent.width-leftBox.width
+			x:leftBox.width
+            y:pos_y
+            height:parent.height-pos_y
+            WebView {
+    	        id:pageView
+//  	                  width: flick.width-20
+//  	                  x:10
+    	        width: parent.width
+    	        height: parent.height -webview_btns.height
+    	        onLoadingChanged:function(event){
+                    if(event.status!==2){
+    	                return;
+    	            }
+                    pageView.runJavaScript(tableOfContent.readfile(":/res/jquery.js"),function(result){
+                        console.log(result);
+                    });
+                    pageView.runJavaScript(tableOfContent.readfile(":/res/jquery-ui.min.js"));
+                    pageView.runJavaScript(tableOfContent.readfile(":/res/rloader1.5.4_fin.js"));
+                    pageView.runJavaScript(tableOfContent.readfile(":/res/book.js"));
+
+    	            console.log("find index id",tableOfContent.urlToIndex(url));
+    	            console.log(root.bookName, tableOfContent.readIndex(),tableOfContent.getIndexOfTable());
+					userdata.read(root.bookUrl,root.bookName,tableOfContent.readIndex(),0);
+					tocListView.currentIndex = tableOfContent.getIndexOfTable();
+    	        }
+
+    	    }
+
+
+    	    Rectangle{
+    	        color:"#bae8e8"
+    	        id:webview_btns
+				width:centerBox.width
+    	        anchors.top: pageView.bottom
+    	        height:35
+//  	                  border.width: 1
+
+    	        Row {
+    	            id:tool_row
+    	            anchors.centerIn: parent
+    	            spacing: 5
+    	            property int  cellHeight: 26
+
+    	            Text {
+    	                id: open_menu
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: {
+    	                        leftBox.open();
+    	                    }
+    	                }
+    	            }
+    	            Text {
+    	                id: open_chat
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: {
+    	                          chatBox.open();
+//  	                                      if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
+//  	                                      else chatBox.implicitWidth=0;
+    	                    }
+    	                }
+    	            }
+
+    	            Text {
+
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+//  	                          radius: 2
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+
+//  	                          border.width:1
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: function(){
+    	                         // 标记
+
+    	                    }
+    	                }
+    	            }
+
+    	            Text {
+
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+//  	                          radius: 2
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+
+//  	                          border.width:1
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked: function(){
+    	                         // 上一页
+    	                       var u = tableOfContent.prevPage();
+    	                        if(u!=="") pageView.url =tableOfContent.hosts()+u;
+    	                    }
+    	                }
+    	            }
+
+    	            Text {
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+//  	                          radius: 2
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+
+//  	                          border.width:1
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked:function() {
+
+    	                       // 下一页
+    	                        var u= tableOfContent.nextPage();
+    	                        if(u!=="")
+    	                        pageView.url =tableOfContent.hosts()+u;
+//  	                          root.onstartScrollTo = 0;
+    	                    }
+    	                }
+    	            }
+
+    	            Text {
+    	                id:share_text
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked:function() {
+    	                        console.log(pageView.selectedText);
+//  	                          tableOfContent.shareToImage(pageView.selectedText,root.bookName,16,"/Users/ablegao/code/andctrol/share.jpg");
+    	                        painterBox_text.text = pageView.selectedText;
+
+    	                        painterBox.open();
+    	                    }
+    	                }
+    	            }
+
+                    // settings.
+    	            Text {
+    	                width: parent.cellHeight
+    	                height: parent.cellHeight
+//  	                          radius: 2
+    	                font.pixelSize: parent.cellHeight
+    	                text:''
+
+//  	                          border.width:1
+    	                font.family: iconFont.name
+    	                MouseArea {
+    	                    anchors.fill: parent
+    	                    onClicked:function() {
+                                setting_config.open();
+//
+    	                    }
+    	                }
+					}
+
+  	              Text {
+  	                  width: parent.cellHeight
+  	                  height: parent.cellHeight
+//	                            radius: 2
+  	                  font.pixelSize: parent.cellHeight
+  	                  text:''
+
+//	                            border.width:1
+  	                  font.family: iconFont.name
+  	                  MouseArea {
+  	                      anchors.fill: parent
+  	                      onClicked:function() {
+							  book_lists.open();
+  	                      }
+  	                  }
+  	              }
+    	        }
+    	    }
+		}
+
+    Popup {
+        id: setting_config
+        modal:true
+        focus:true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         width:parent.width
-        height:parent.height
-        NetworkManager {
-            id:network_access_manager
-        }
-        Flickable {
-             id: flick
+        height:parent.height - webview_btns.height-pos_y
+        y:pos_y
 
-             width: parent.width
-             height:parent.height - webview_btns.height
-             contentWidth: parent.width
-             contentHeight: pageView.contentHeight +30
-             onWidthChanged: function(){
-//                console.log(flick.width);
-                 tableOfContent.setSize(flick.width,flick.height);
-             }
-//             property int maximumFlickableX: contentWidth - width // 计算滚动的最大值
-//             onContentXChanged: contentX = Math.min(Math.max(0, contentX), maximumFlickableX) // 当滚动超过最大值时，将滚动位置限制在最大值内
-             clip: true
-            onMovementEnded:function(){
-//                console.log("scroll move.",flick.contentY);
-                userdata.read(root.bookName,root.pageIndex,flick.contentY);
-            }
-            function ensureVisible(r)
-            {
-                  if (contentX >= r.x)
-                      contentX = r.x;
-                  else if (contentX+width <= r.x+r.width)
-                      contentX = r.x+r.width-width;
-                  if (contentY >= r.y)
-                      contentY = r.y;
-                  else if (contentY+height <= r.y+r.height)
-                      contentY = r.y+r.height-height;
-            }
+        // 设置界面的主要内容
+        Item {
+            anchors.fill: parent
 
-            TextEdit {
-                id:pageView
-//                    width: flick.width-20
-//                    x:10
-                x:20
-                y:20
-                width: flick.width-40
 
-                textFormat: Text.RichText
-                wrapMode:TextEdit.Wrap
-                readOnly: true
-                selectByMouse: true
-                focus: true
-//                    baseUrl: "image://mybook/"
-                font.pixelSize: 16
+            Column {
+                spacing: 10
 
-                onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
-                onLinkActivated:function(url){
-//                        console.log();
-                    pageView.text = tableOfContent.openPage(tableOfContent.absoluteFilePath(url));
+                // OPNEAI API KEY
+                Row {
+                    spacing: 10
+
+                    Text {
+                        text: "OPNEAI API KEY:"
+                        width: 150
+                    }
+
+                    TextField {
+                        id: apiKeyField
+                        width:400
+                        placeholderText: "Enter API Key"
+                    }
                 }
 
-            }
-        }
+                // Font Size
+                Row {
+                    spacing: 10
 
-        Rectangle{
-            color:"#bae8e8"
-            id:webview_btns
-            width:parent.width
-            anchors.top: flick.bottom
-            height:35
-//                    border.width: 1
+                    Text {
+                        text: "Font Size:"
+                        width: 150
+                    }
 
-            Row {
-                id:tool_row
-                anchors.centerIn: parent
-                spacing: 5
-                property int  cellHeight: 26
-                Repeater {
-                    model: ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
-                    delegate: Rectangle {
-                        id: colorBlock
-                        width: parent.cellHeight
-                        height: parent.cellHeight
-                        color:  modelData
-                        radius: 2
-                        border.width:1
-//                                function getColor  (index) {
-//                                    console.log("index==== ",index);
-//                                    var colors = ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
-//                                    return colors[index]
-//                                }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                var start = pageView.selectionStart
-                                var end = pageView.selectionEnd
-                                console.log(start,end);
-                                var extraSelection = {
-                                    "cursor": {"selectionStart": start, "selectionEnd": end},
-                                    "format": {"background": "yellow"}
-                                }
-                                pageView.extraSelections.push(extraSelection)
-                                pageView.extraSelections = pageView.extraSelections;
-//                                pageView.runJavaScript(`
-//                                                var selectedText = window.getSelection();
-//                                                var range = selectedText.getRangeAt(0);
-//                                                var span = document.createElement('span');
-//                                                span.style.backgroundColor ="`+modelData+`";
-//                                                range.surroundContents(span);
-//                                            `);
-//                                        pageView.text
-//                                        console.log("Clicked color:", colorBlock.color)
-//                                        pageView.text= pageView.text.replace(pageView.selectedText,"<span color='"+colorBlock.color+"'>"+pageView.selectedText+"</span>")
+                    SpinBox {
+                        id: fontSizeSpinBox
+                        from: 1
+                        to: 100
+                        value: 16
+                    }
+                }
+
+                // Book Dir
+                Row {
+                    spacing: 10
+
+                    Text {
+                        text: "Book Dir:"
+                        width: 150
+                    }
+
+                    ListView{
+                        id:bookDir
+                        width:400
+                        height:100
+                        model:ListModel{
+                        }
+                        delegate: Text {
+                                text: dir_path
+                        }
+                    }
+                }
+
+                Row {
+                    spacing: 10
+
+                    Text {
+                        text: "Book Dir:"
+                        width: 150
+                    }
+                    Button{
+                        text:"Select Book Folder"
+                        onClicked: function(){
+                            fileDialog.open();
+                        }
+                    }
+
+                    FolderDialog {
+                        id: fileDialog
+                        folder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+                        onAccepted:function(){
+                            var path= fileDialog.currentFolder.toString();
+                            if(path.substring(0,7)==="file://"){
+                                path = path.substring(7);
                             }
+                            for(var i=0;i<bookDir.model.count;i++){
+                                var old = bookDir.model.get(i);
+                                if(old['dir_path']=== path){
+                                    console.log("path exists: "+ path);
+                                    return;
+                                }
+                            }
+                            bookDir.model.append({"dir_path":path});
                         }
-
-
                     }
                 }
 
-                Text {
-                    id: open_menu
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-                    font.pixelSize: parent.cellHeight
-                    text:''
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
+                Row{
+                    spacing: 10
+                    Button {
+                        text: "Save"
                         onClicked: {
-                            leftBox.open();
+                            var apiKey = apiKeyField.text;
+                            var fontSize = fontSizeSpinBox.value;
+                            // 在这里保存设置值
+                            console.log("API Key:", apiKey);
+                            console.log("Font Size:", fontSize);
+                            console.log("Book Dir:", bookDir);
                         }
                     }
                 }
-                Text {
-                    id: open_chat
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-                    font.pixelSize: parent.cellHeight
-                    text:''
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                              chatBox.open();
-//                                        if(chatBox.implicitWidth==0) chatBox.implicitWidth=300;
-//                                        else chatBox.implicitWidth=0;
-                        }
-                    }
-                }
+            }
+        }
 
-                Text {
+        // 底部按钮
 
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
-
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: function(){
-                             // 标记
-
-                        }
-                    }
-                }
-
-                Text {
-
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
-
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: function(){
-                             // 上一页
-                           var u = tableOfContent.prevPage();
-                            if(u!=="") pageView.text =tableOfContent.openPage(u);
-                        }
-                    }
-                }
-
-                Text {
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
-
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:function() {
-
-                           // 下一页
-                            var u= tableOfContent.nextPage();
-                            if(u!=="")
-                            pageView.text =tableOfContent.openPage(u);
-                            root.onstartScrollTo = 0;
-                        }
-                    }
-                }
-
-                Text {
-                    id:share_text
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-                    font.pixelSize: parent.cellHeight
-                    text:''
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:function() {
-                            console.log(pageView.selectedText);
-//                            tableOfContent.shareToImage(pageView.selectedText,root.bookName,16,"/Users/ablegao/code/andctrol/share.jpg");
-                            painterBox_text.text = pageView.selectedText;
-
-                            painterBox.open();
-                        }
-                    }
-                }
-
-
-                Text {
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
-
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:function() {
-
-//                           // 下一页
-//                            var u= tableOfContent.nextPage();
-//                            if(u!=="")
-//                            pageView.url = "mybook://book.local"+u;
-//                            root.onstartScrollTo = 0;
-                        }
-                    }
-                }
-
-                Text {
-                    width: parent.cellHeight
-                    height: parent.cellHeight
-//                            radius: 2
-                    font.pixelSize: parent.cellHeight
-                    text:''
-
-//                            border.width:1
-                    font.family: iconFont.name
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:function() {
-                            bookLists.open();
-                            sync_open_load.start();
-                        }
-                    }
-                }
+        onOpened: function(){
+            var config = userdata.getSettings();
+            apiKeyField.text = config.openai_api_key;
+            fontSizeSpinBox.value = config.font_size;
+            for(var item in config.book_dirs){
+                bookDir.model.append({"dir_path":config.book_dirs[item]});
             }
         }
     }
@@ -387,202 +550,7 @@ Window {
 //        }
     }
 
-    Popup {
-        id: bookLists
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width:root.width
-        height:root.height - webview_btns.height
-        Rectangle {
-                    anchors.fill: parent
-                    color: "#fffffe"
-                    radius: 10
-        }
-        Text {
-            id:bookLists_Loading
-            text:"loading...."
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignHCenter
-            anchors.fill: parent
-
-        }
-        onClosed: function(){
-            bookLists_Loading.visible=false;
-        }
-        onOpened: function(){
-            bookLists_Loading.visible=true;
-        }
-        Loader {
-                id: bookListLoader
-                anchors.fill: parent
-                active: false
-                asynchronous: true
-                visible: status == Loader.Ready
-                sourceComponent: bookListComponent
-                onLoaded: function(){
-                    bookLists_Loading.visible=false;
-                }
-        }
-//        onOpened:  {
-//                sync_open_load.start();
-////                bookListLoader.sourceComponent = bookListComponent
-////                bookLists.contentItem = bookListLoader.item // 设置Popup内容为加载的GridView
-////            bookListLoader.setSource(bookListComponent)
-
-////            console.log("=----------");
-//        }
-        Timer {
-            id:sync_open_load
-            interval: 10
-            repeat: false
-            running: false
-            onTriggered: function(){
-                bookListLoader.active = false  // 关闭Loader
-                bookListLoader.active = true   // 重新加载,获取最新数据模型
-            }
-        }
-
-        Component {
-            id:bookListComponent
-
-            GridView {
-               id:book_list_grid
-               anchors.fill: parent
-               cellWidth: 180
-               cellHeight: 320
-               clip:true
-
-
-               model:userdata.books()
-
-               delegate: Rectangle {
-                    width:book_list_grid.cellWidth
-                    height:book_list_grid.cellHeight
-                    anchors.margins: 4
-                    color:"#fffffe"
-    //                DropShadow {
-    //                   anchors.fill: parent
-    //                   radius: 8.0
-    //                   samples: 17
-    //                   color: "#80000000"
-    //                   horizontalOffset: 3
-    //                   verticalOffset: 3
-    //                   spread: 0
-    //               }
-                   Column{
-                        Image {
-                            id:book_icon
-                            width: book_list_grid.cellWidth-4
-                            height: width/0.704
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous:true
-                            visible: modelData.book_image.length>0?true:false
-                            source: visible?"data:image/png;base64,"+modelData.book_image:""  // 模拟图片源
-
-                        }
-                        Text {
-                            id:title_icon
-                            text:modelData.book_name
-                            elide: Text.ElideRight
-                            width:book_icon.width
-                            height:book_icon.visible?book_list_grid.cellHeight-book_icon.height:book_list_grid.cellHeight
-                            verticalAlignment: Text.AlignVCenter
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode :Text.Wrap
-                            color:"#272343" // book_icon.visible? :"#e3f6f5"
-//                            background:book_icon.visible?"":"#e3f6f5"
-                            anchors.margins: 2
-                        }
-                    }
-                   MouseArea {
-                    anchors.fill: parent
-                    onClicked: function(){
-    //                    console.log(modelData.book_name);
-                        tableOfContent.openBook(modelData.book_url);
-                        bookLists.close();
-                    }
-                   }
-                }
-            }
-        }
-    }
-
-    Popup{
-        id:leftBox
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width:300
-        height:root.height-webview_btns.height
-//        Rectangle {
-//            anchors.fill: parent
-//            color: "#fffffe"
-//            radius: 10
-//        }
-        Rectangle {
-                    anchors.fill: parent
-                    color: "#fffffe"
-                    radius: 10
-        }
-        Column{
-            Rectangle{
-                id:bookIconBox
-                width:leftBox.width-20
-                height:200 +20
-                radius: 10
-//                visible: leftBox.implicitWidth>=200?true:false
-
-
-//                border.width:1
-                Image{
-                    id:bookIcon
-                    source:""
-                    anchors.margins: 10
-                    anchors.centerIn: parent
-                }
-            }
-            ListView {
-                id: tocListView
-//                anchors.margins: 10
-                width:leftBox.width
-                height:leftBox.height - bookIconBox.height -20
-                model: tableOfContent
-                delegate:  Item{
-                    width: tocListView.width
-                    height: textItem.implicitHeight
-                    Text {
-                        id:textItem
-                        text: chapterName
-                        font.pixelSize: 16
-                        padding: 8
-                        width:parent.width
-                        wrapMode:Text.Wrap
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: function(){
-
-                            tocListView.currentIndex = index;
-//                            pageView.url = "mybook://book.local"+chapterUrl;
-                            pageView.text = tableOfContent.openPage(chapterUrl);
-                            console.log(chapterUrl);
-
-                        }
-                    }
-                }
-                highlight: Rectangle {
-                    color: "#bae8e8"
-                    width:leftBox.width-20
-                }
-                highlightMoveDuration:100
-                focus: true
-                clip:true
-
-            }
-        }
-    }
-
+    
     Popup{
 //            color:"#fffffe"
             id:chatBox
@@ -672,14 +640,11 @@ Window {
 //                            radius: 2
                         font.pixelSize: parent.cellHeight
                         text:''
-
-//                            border.width:1
                         font.family: iconFont.name
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
                                 chat_input_text.text+= pageView.selectedText;
-//                                        console.log("Clicked color:", colorBlock.color)
                             }
                         }
                     }
@@ -752,7 +717,86 @@ Window {
             }
     }
 
+    Popup {
+        id:transferBox
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width:root.width
+        height:transferBoxColumn.height+20
+        y:root.height - height - webview_btns.height
+        Rectangle {
+                    anchors.fill: parent
+                    color: "#fffffe"
+        }
+        Column{
+            id:transferBoxColumn
+            width:parent.width
+//            anchors.fill: parent
+            Row {
+                height:26
+                spacing: 5
+                property int  cellHeight: 26
+                Repeater {
+                    model: ["#FFA07A", "#98FB98", "#87CEFA", "#FFFACD","#FFFFFF"]
+                    delegate: Rectangle {
+                        width: parent.cellHeight
+                        height: parent.cellHeight
+                        color:  modelData
+                        radius: 2
+                        border.width:1
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                            }
+                        }
+                    }
+                }
+            }
+            TextEdit {
+                id:transfer_box_text
+				text:""
+				textFormat: Text.RichText
+                wrapMode:Text.Wrap
+                width:parent.width-40
+				anchors.margins: 20
+				onLinkActivated:(link)=>Qt.openUrlExternally(link)
+            }
+        }
+    }
 
+	Popup{
+		id:book_lists
+		width:root.width
+        height:root.height-pos_y
+        y:pos_y
+
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+		Rectangle {
+            anchors.fill: parent
+            color: "#fffffe"
+		}
+		onOpened:function(){
+            books_loader.setSource("qrc:/nadoview/books.qml",{userdata:userdata,appSingle:appSingle});
+            console.log("on opened....");
+		}
+		Loader{
+			id:books_loader
+			anchors.fill:parent
+			// source:"books.qml"
+		    asynchronous: true
+				
+		}
+        Shortcut {
+            sequence: "Esc"
+            onActivated: {
+                console.log("Esc: cancel a few things")
+                book_lists.close()
+            }
+        }
+	}
     Timer {
             id: selectionTimer
             interval: 800 // 1 second delay

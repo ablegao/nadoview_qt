@@ -16,13 +16,13 @@ QVariant OpenChatModel::data(const QModelIndex &index, int role) const {
     if (role == ChatMessage) {
         return chatData.at(index.row())
             .toMap()
-            .value("chatMessage"); // 这里的chapterID 是mData中的key
+            .value("chatMessage");  // 这里的chapterID 是mData中的key
     }
 
     if (role == ChatRole) {
         return chatData.at(index.row())
             .toMap()
-            .value("chatRole"); // 这里的chapterID 是mData中的key
+            .value("chatRole");  // 这里的chapterID 是mData中的key
     }
 
     if (role == ChatID) {
