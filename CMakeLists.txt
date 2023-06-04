@@ -1,9 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
-
+#include("cmake/HunterGate.cmake")
+include("FetchContent")
+#HunterGate(
+#    URL "https://github.com/cpp-pm/hunter/archive/v0.24.17.tar.gz"
+#    SHA1 "e6396699e414120e32557fe92db097b7655b760b"
+#)
 project(
   nadoview
   VERSION 0.1
   LANGUAGES CXX)
+
+
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,15 +23,37 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(app_icon_macos "${CMAKE_CURRENT_SOURCE_DIR}/icon.icns")
 set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/app_win32.rc")
 
+
+
 set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION
                                                          "Resources")
 
-add_subdirectory(quazip)
-add_subdirectory(aws-sdk-cpp EXCLUDE_FROM_ALL)
-# find_package(aws-sdk-cpp REQUIRED COMPONENTS core translate comprehend)
+
+FetchContent_Declare(
+    quazip
+    GIT_REPOSITORY https://github.com/stachenov/quazip.git
+    GIT_TAG master
+)
+
+## aws sdk 会执行test
+#option(ENABLE_TESTING "" OFF)
+#option(AUTORUN_UNIT_TESTS "" OFF)
+
+#FetchContent_Declare(
+#    aws-sdk-cpp
+#    GIT_REPOSITORY https://github.com/aws/aws-sdk-cpp.git
+#    GIT_TAG 1.11.92
+#    EXCLUDE_FROM_ALL TRUE
+#)
+
+FetchContent_MakeAvailable(quazip)
+
+#add_subdirectory(aws-sdk-cpp EXCLUDE_FROM_ALL)
+
+
 
 find_package(
-  Qt6 6.5.0
+  Qt6 6.5.1
   COMPONENTS Core
              WebView
              WebChannel
@@ -58,6 +87,8 @@ qt_add_executable(
   ebooklib/ibook.cpp
   myappsingle.h
   myappsingle.cpp
+#  macos.h
+#  macos.mm
   transferworker.h
   transferworker.cpp
   transfer.h
@@ -90,7 +121,11 @@ set_target_properties(
              MACOSX_BUNDLE_ICON_FILE icon.icns
              MACOSX_BUNDLE TRUE
              # QT_DEBUG_PLUGINS TRUE
-             WIN32_EXECUTABLE TRUE)
+             WIN32_EXECUTABLE TRUE
+             IMPORTED_LOCATION  ${CMAKE_CURRENT_BINARY_DIR}/aws-sdk-cpp/install/lib/libaws-cpp-sdk-core.a
+             IMPORTED_LOCATION  ${CMAKE_CURRENT_BINARY_DIR}/aws-sdk-cpp/install/lib/aws-cpp-sdk-translate.a
+#             INCLUDE_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}/aws-sdk-cpp/install/include
+         )
 
 set_property(
   TARGET appnadoview
@@ -103,6 +138,7 @@ target_link_libraries(
           Qt6::CorePrivate
           Qt6::WebView
           Qt6::WebChannel
+#          Qt6::WebEngineQuick
           Qt6::HttpServer
           Qt6::QuickControls2
           Qt6::QuickControls2Impl
@@ -112,9 +148,12 @@ target_link_libraries(
           Qt6::Quick
           Qt6::Xml
           QuaZip::QuaZip
-          aws-cpp-sdk-core
-		  # aws-cpp-sdk-comprehend
-          aws-cpp-sdk-translate)
+
+#          aws-cpp-sdk-core
+##                  # aws-cpp-sdk-comprehend
+#          aws-cpp-sdk-translate
+#          ${quazip_BINARY_DIR}/quazip/libquazip1-qt6d.1.4.dylib
+      )
 
 install(
   TARGETS appnadoview

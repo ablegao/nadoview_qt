@@ -1,16 +1,16 @@
 #include "userdata.h"
 
+#include "QtCore/qjsonarray.h"
 #include "QtCore/qjsonobject.h"
 #include "QtSql/qsqldatabase.h"
 #include "userdatabookworks.h"
 QSqlDatabase UserData::connectDB() {
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    QDir userDir =
-        QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    qDebug() << " out debug" << userDir;
+
     //    QString dataPath  =
     //    homeDir(userDir);
-    dataFile = userDir.absoluteFilePath("mybook.sqlite3");
+    dataFile = userDir.absoluteFilePath("nadoview.sqlite3");
+    qDebug() << " out debug" << userDir << dataFile;
     db.setDatabaseName(dataFile);
     db.open();
     return db;
@@ -23,13 +23,13 @@ UserData::UserData(QObject *parent) : QObject{parent} {
     QSqlQuery query(db);
 
     if (!query.exec("CREATE TABLE IF NOT EXISTS book ("
-                    "id TEXT PRIMARY KEY,"
-                    "book_name TEXT,"
-                    "auther TEXT,"
-                    "book_url TEXT,"
+                    "id VARCHAR(32) PRIMARY KEY,"
+                    "book_name VARCHAR(300),"
+                    "auther VARCHAR(100),"
+                    "book_url VARCHAR(300),"
                     "book_image BLOB,"
-                    "lang TEXT,"
-                    "tags TEXT,"
+                    "lang VARCHAR(50),"
+                    "tags VARCHAR(100),"
                     "last_read_index INTEGER,"
                     "last_read_scroll_number INTEGER,"
                     "last_read_time DATETIME"
@@ -38,18 +38,18 @@ UserData::UserData(QObject *parent) : QObject{parent} {
     }
 
     // 创建write_label表
-    if (!query.exec("CREATE TABLE IF NOT EXISTS write_label ("
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "book_id TEXT,"
-                    "read_index INTEGER,"
-                    "label_source TEXT,"
-                    "label_color TEXT,"
-                    "label_postil TEXT,"
-                    "FOREIGN KEY(book_id) REFERENCES book(id)"
-                    ")")) {
-        qDebug() << "Failed to create write_label table:"
-                 << query.lastError().text();
-    }
+    //    if (!query.exec("CREATE TABLE IF NOT EXISTS write_label ("
+    //                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    //                    "book_id VARCHAR(32),"
+    //                    "read_index INTEGER,"
+    //                    "label_source TEXT,"
+    //                    "label_color VARCHAR(100),"
+    //                    "label_postil VARCHAR(100),"
+    //                    "FOREIGN KEY(book_id) REFERENCES book(id)"
+    //                    ")")) {
+    //        qDebug() << "Failed to create write_label table:"
+    //                 << query.lastError().text();
+    //    }
 
     //        if (!query.exec("CREATE TABLE book_list ("
     //                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -65,35 +65,36 @@ UserData::UserData(QObject *parent) : QObject{parent} {
     //        }
 
     // 创建settings表
-    if (!query.exec(
-            "CREATE TABLE IF NOT EXISTS settings (json_settings TEXT)")) {
+    if (!query.exec("CREATE TABLE IF NOT EXISTS setting (id INTEGER PRIMARY "
+                    "KEY AUTOINCREMENT, key VARCHAR(30),value VARCHAR(300))")) {
         qDebug() << "Failed to create settings table:"
                  << query.lastError().text();
     }
 
-    query.prepare("SELECT * FROM settings");
+    query.prepare("SELECT * FROM setting");
     if (!query.exec()) {
-        qDebug() << "Failed to query settings:" << query.lastError().text();
+        qDebug() << "Failed to query setting:" << query.lastError().text();
     }
 
-    // 如果settings表为空,初始化数据
-    if (!query.next()) {
-        query.prepare("INSERT INTO settings (json_settings) VALUES (:data)");
-        QJsonObject obj{
-            {"book_dirs", QJsonArray{QDir::homePath() + "/Books",
-                                     "/storage/emulated/0/Download"}},
-            {"font_size", 16}};
-        query.bindValue(":data", QJsonDocument(obj).toJson());
-        if (!query.exec()) {
-            qDebug() << "Failed to init settings:" << query.lastError().text();
-        }
-    }
+    //    // 如果settings表为空,初始化数据
+    //    if (!query.next()) {
+    //        query.prepare("INSERT INTO setting (json_settings) VALUES
+    //        (:data)"); QJsonObject obj{
+    //            {"book_dirs", QJsonArray{QDir::homePath() + "/Books",
+    //                                     "/storage/emulated/0/Download"}},
+    //            {"font_size", 16}};
+    //        query.bindValue(":data", QJsonDocument(obj).toJson());
+    //        if (!query.exec()) {
+    //            qDebug() << "Failed to init settings:" <<
+    //            query.lastError().text();
+    //        }
+    //    }
     // 检查sqlite3 库中， tags表是否存在，如果不存在则创建
 
     if (!query.exec("CREATE TABLE IF NOT EXISTS tags ("
                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "tag_name TEXT,"
-                    "tag_color TEXT"
+                    "name VARCHAR(30),"
+                    "color VARCHAR(30)"
                     ")"))
         qDebug() << "Failed to create book table:" << query.lastError().text();
     // bookSearch();
@@ -305,17 +306,27 @@ QJsonArray UserData::books(int count) {
         //        qDebug() << "-------- " << query.value("id").toString() <<
         //        query.value("book_name").toString();
 
-        // 从BLOB字段读取图片
-        QByteArray imgData = query.value("book_image").toByteArray();
-        QBuffer buffer(&imgData);
-        QImage image;
-        image.load(&buffer, "PNG");
-        // 序列化QImage到BASE64字符串
-        QByteArray ba;
-        QBuffer buf(&ba);
-        image.save(&buf, "PNG");
-        obj.insert("book_image", QString(ba.toBase64()));
-
+        // // 从BLOB字段读取图片
+        // QByteArray imgData = query.value("book_image").toByteArray();
+        // QBuffer buffer(&imgData);
+        // QImage image;
+        // image.load(&buffer, "PNG");
+        // // 序列化QImage到BASE64字符串
+        // QByteArray ba;
+        // QBuffer buf(&ba);
+        // image.save(&buf, "PNG");
+        // obj.insert("book_image", QString(ba.toBase64()));
+        if (QFile(userDir.absoluteFilePath(query.value("id").toString() + "/" +
+                                           query.value("id").toString() +
+                                           ".jpg"))
+                .exists()) {
+            obj.insert("book_image",
+                       userDir.absoluteFilePath(
+                           query.value("id").toString() + "/" +
+                           query.value("id").toString() + ".jpg"));
+        } else {
+            obj.insert("book_image", "");
+        }
         array.append(obj);
     }
     db.close();
@@ -406,14 +417,29 @@ QJsonObject UserData::getSettings() {
     QSqlQuery query(db);
     query.exec("PRAGMA journal_mode = WAL;");
 
-    query.prepare("SELECT json_settings FROM settings LIMIT 1");
+    query.prepare("SELECT key,value FROM setting ");
     query.exec();
-    if (query.next()) {
-        QJsonDocument doc =
-            QJsonDocument::fromJson(query.value(0).toString().toUtf8());
-        db.close();
-        return doc.object();
+
+    QJsonObject doc;
+    //    doc["book_dir"] = QJsonArray();
+    //    if (query.next()) {
+    //        QJsonDocument doc =
+    //            QJsonDocument::fromJson(query.value(0).toString().toUtf8());
+    //        db.close();
+    //        return doc.object();
+    //    }
+    QJsonArray bookDir;
+    while (query.next()) {
+        QString key = query.value(0).toString().toUtf8();
+        QString value = query.value(0).toString().toUtf8();
+        if (key == "book_dir") {
+            //            doc["book_dir"]
+            bookDir.append(value);
+        } else {
+            doc[key] = value;
+        }
     }
+    doc["book_dirs"] = bookDir;
     qDebug() << "out.........";
     db.close();
     return QJsonObject();
@@ -439,45 +465,37 @@ void UserData::bookSearch() {
     QSqlQuery query(db);
     query.exec("PRAGMA journal_mode = WAL;");
 
-    query.prepare("SELECT json_settings FROM settings");
+    query.prepare("SELECT value FROM setting where key='book_dir'");
 
-    if (query.next()) {
-        QJsonDocument doc =
-            QJsonDocument::fromJson(query.value(0).toString().toUtf8());
-        QJsonObject obj = doc.object();
-        QJsonArray dirs = obj["book_dirs"].toArray();
-        qDebug() << "book dirs" << dirs;
-        QStringList filter;
-        // 过滤得到文本文件(.txt, .epub, .mobi等)
-        filter << "*.epub";  //<< "*.txt" << "*.epub" << "*.mobi" << "*.azw3";
+    QStringList filter;
+    // 过滤得到文本文件(.txt, .epub, .mobi等)
+    filter << "*.epub";  //<< "*.txt" << "*.epub" << "*.mobi" << "*.azw3";
 
-        // 遍历book_dirs中的文件夹路径
-        for (int i = 0; i < dirs.size(); i++) {
-            QString dir = dirs[i].toString();
+    // 遍历book_dirs中的文件夹路径
+    while (query.next()) {
+        QString dir = query.value(0).toString();
 
-            QDir directory(dir);
-            directory = directory.absolutePath();
-            //            qDebug() << " serach dir ..." << directory;
+        QDir directory(dir);
+        directory = directory.absolutePath();
+        //            qDebug() << " serach dir ..." << directory;
 
-            // 获取文件夹下所有的文件
-            QStringList files = directory.entryList(filter, QDir::Files);
-            qDebug() << "files " << files.size();
+        // 获取文件夹下所有的文件
+        QStringList files = directory.entryList(filter, QDir::Files);
+        qDebug() << "files " << files.size();
 
+        for (const QString &f : files) {
+            QString bookUrl = directory.absoluteFilePath(f);
+            addBook(bookUrl);
+            // 对文本文件进行进一步处理,存入book_list表等
+        }
+        QStringList subDirs =
+            directory.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const QString &subDir : subDirs) {
+            QDir subDirPath = directory.absoluteFilePath(subDir);
+            QStringList subFiles = subDirPath.entryList(filter, QDir::Files);
             for (const QString &f : files) {
-                QString bookUrl = directory.absoluteFilePath(f);
+                QString bookUrl = subDirPath.absoluteFilePath(f);
                 addBook(bookUrl);
-                // 对文本文件进行进一步处理,存入book_list表等
-            }
-            QStringList subDirs =
-                directory.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-            for (const QString &subDir : subDirs) {
-                QDir subDirPath = directory.absoluteFilePath(subDir);
-                QStringList subFiles =
-                    subDirPath.entryList(filter, QDir::Files);
-                for (const QString &f : files) {
-                    QString bookUrl = subDirPath.absoluteFilePath(f);
-                    addBook(bookUrl);
-                }
             }
         }
     }

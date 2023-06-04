@@ -6,5 +6,12 @@
         <file>books.qml</file>
         <file>mainwin.qml</file>
         <file>settings.qml</file>
+        <file>res/book.js</file>
+        <file>res/jquery-ui.min.js</file>
+        <file>res/jquery-ui.min.css</file>
+        <file>res/jquery-ui.structure.min.css</file>
+        <file>res/jquery-ui.theme.min.css</file>
+        <file>res/jquery.js</file>
+        <file>res/rloader1.5.4_fin.js</file>
     </qresource>
 </RCC>

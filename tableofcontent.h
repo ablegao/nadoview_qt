@@ -1,13 +1,14 @@
 #ifndef TABLEOFCONTENT_H
 #define TABLEOFCONTENT_H
-#include <aws/core/Aws.h>
-#include <aws/translate/TranslateClient.h>
-#include <aws/translate/TranslateRequest.h>
-#include <aws/translate/model/TranslateTextRequest.h>
-#include <aws/translate/model/TranslateTextResult.h>
+// #include <aws/core/Aws.h>
+// #include <aws/translate/TranslateClient.h>
+// #include <aws/translate/TranslateRequest.h>
+// #include <aws/translate/model/TranslateTextRequest.h>
+// #include <aws/translate/model/TranslateTextResult.h>
 
 #include <QAbstractListModel>
 #include <QEventLoop>
+#include <QFile>
 #include <QFont>
 #include <QHttpServer>
 #include <QHttpServerRequest>
@@ -17,6 +18,7 @@
 #include <QPainter>
 #include <QRegularExpression>
 
+#include "QtCore/qtmetamacros.h"
 #include "QtNetwork/qnetworkreply.h"
 #include "ebooklib/epubbook.h"
 #include "ebooklib/ibook.h"
@@ -70,6 +72,9 @@ class TableOfContent : public QAbstractListModel {
         Q_INVOKABLE QString hosts();
         QByteArray handleRequest(const QHttpServerRequest &request);
         QByteArray transferRequest(const QHttpServerRequest &request);
+        Q_INVOKABLE QString relativeFilePath(const QString &url);
+
+        Q_INVOKABLE QString readfile(const QString &file);
         //    QWebEngineUrlSchemeHandler *urlSchemeHandler();
     signals:
         void bookOpenFinishd(const QVariantMap &bookInfo);
@@ -92,6 +97,9 @@ class TableOfContent : public QAbstractListModel {
         QRegularExpression strongRegex =
             QRegularExpression("(\\*\\*)(.+)(\\*\\*)");
         QRegularExpression emRegex = QRegularExpression("(\\*)(.+)(\\*)");
+        QDir userDir =
+            QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation))
+                .absoluteFilePath(".cache/nadoview");
 };
 
 #endif  // TABLEOFCONTENT_H

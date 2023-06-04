@@ -1,7 +1,10 @@
 #include "tableofcontent.h"
 
+#include "QtCore/qbytearray.h"
+#include "QtCore/qiodevice.h"
 #include "QtCore/qjsonarray.h"
 #include "QtCore/qjsonobject.h"
+#include "QtCore/qtmetamacros.h"
 
 // // 这个写法，是为了初始化变量mData , C++ 可以在构造函数定义中初始化变量
 // 不是在构造函数function 内部
@@ -30,7 +33,7 @@ TableOfContent::TableOfContent(QObject *parent) : QAbstractListModel(parent) {
                           return handleRequest(request);
                       }));
 
-    //    qDebug() << "Server :" << hosts();
+    qDebug() << "Server :" << hosts();
 }
 TableOfContent::~TableOfContent() { mBook = nullptr; }
 
@@ -40,7 +43,16 @@ QString TableOfContent::hosts() {
 
 QByteArray TableOfContent::handleRequest(const QHttpServerRequest &request) {
     if (mBook != nullptr) {
-        return mBook->openFileByUrl(request.url().path());
+        QString URI = request.url().path();
+        qDebug() << "========== " << URI;
+        QByteArray result = mBook->openFileByUrl(request.url().path());
+        //        if (URI.endsWith("htm") || URI.endsWith("html")) {
+        //            QString end_js
+        //                = "<script type='text/javascript'
+        //                src='https://code.jquery.com/jquery-3.7.0.min.js'></script>";
+        //            result += end_js.toUtf8();
+        //        }
+        return result;
     }
 
     return "NONE";
@@ -254,10 +266,8 @@ void TableOfContent::setSize(int w, int h) {
 // }
 
 // QWebEngineUrlSchemeHandler *TableOfContent::urlSchemeHandler() {}
-Q_INVOKABLE void TableOfContent::shareToImage(const QString &text,
-                                              const QString &bookName,
-                                              const QString &outdir,
-                                              int fontSize) {
+void TableOfContent::shareToImage(const QString &text, const QString &bookName,
+                                  const QString &outdir, int fontSize) {
     int fontCount = text.length();
     int width = 220;
     int height = fontCount * fontSize / width * fontSize;
@@ -271,4 +281,18 @@ Q_INVOKABLE void TableOfContent::shareToImage(const QString &text,
     painter.drawText(textRect, text);
     painter.end();
     image.save(outdir);
+}
+
+QString TableOfContent::readfile(const QString &src) {
+    QFile file(src);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return QString(file.readAll());
+    } else {
+        qDebug() << "open error:" << src << file.errorString();
+    }
+    return "//not read..";
+}
+
+QString TableOfContent::relativeFilePath(const QString &src) {
+    return userDir.relativeFilePath(src);
 }

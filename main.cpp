@@ -7,17 +7,19 @@
 #include <QTranslator>
 #include <QUrl>
 #include <QtWebView>
-
+//#include <QtWebEngineQuick>
 #include "QtQml/qqml.h"
 #include "myapplication.h"
 #include "myappsingle.h"
 #include "openchatmodel.h"
 #include "tableofcontent.h"
-#include "transfer.h"
+//#include "macos.h"
+
+//#include "transfer.h"
 #include "userdata.h"
 
 int main(int argc, char *argv[]) {
-    //        QtWebEngineQuick::initialize();
+//    QtWebEngineQuick::initialize();
     QtWebView::initialize();
 
     MyApplication app(argc, argv);
@@ -47,7 +49,7 @@ int main(int argc, char *argv[]) {
     // open chat model 注册
     qmlRegisterType<OpenChatModel>("com.tap2happy.nadoview", 1, 0,
                                    "OpenChatModel");
-    qmlRegisterType<Transfer>("com.tap2happy.nadoview", 1, 0, "AwsTransfer");
+//    qmlRegisterType<Transfer>("com.tap2happy.nadoview", 1, 0, "AwsTransfer");
     //    qmlRegisterSingletonType<MyApplication>("NadoView",1,0,"FileOpend",
     //    MyApplication::fileOpend);
     // 初始化引擎
@@ -80,6 +82,7 @@ int main(int argc, char *argv[]) {
     } else {
         emit appSingle.noOpenFile();
     }
+//    MacOS::removeTitlebarFromWindow();
 
     return app.exec();
 }

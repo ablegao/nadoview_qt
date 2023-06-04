@@ -103,9 +103,9 @@ Item {
                     fillMode: Image.PreserveAspectFit
                     asynchronous:true
                     visible: book_image.length>0?true:false
-                    source: visible?"data:image/png;base64,"+book_image:""  // 模拟图片源
-
+                    source: visible?"file://"+book_image:""  // 模拟图片源
                 }
+            
                 Text {
                     id:title_icon
                     text:book_name

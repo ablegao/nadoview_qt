@@ -6,24 +6,25 @@ void TransferWorker::doWork(const QString &text, const QString &fromLang,
     QString text1 = text.trimmed();
     // if (text1.split(" ").size() > 1) {
     if (containsChinese(text) == false) {
-        Aws::SDKOptions options;
-        Aws::InitAPI(options);
-        {
-            Aws::Translate::TranslateClient client;
-            Aws::Translate::Model::TranslateTextRequest request;
-            request =
-                request.WithSourceLanguageCode(fromLang.toStdString().c_str())
-                    .WithTargetLanguageCode(toLang.toStdString().c_str());
-            request.SetText(text1.toStdString().c_str());
-            auto outcome = client.TranslateText(request);
-            if (outcome.IsSuccess()) {
-                auto outtext = outcome.GetResult().GetTranslatedText();
-                emit resultReady(outtext.c_str());
-            } else {
-            }
-        }
+//        Aws::SDKOptions options;
+//        Aws::InitAPI(options);
+//        {
+//            Aws::Translate::TranslateClient client;
+//            Aws::Translate::Model::TranslateTextRequest request;
+//            request =
+//                request.WithSourceLanguageCode(fromLang.toStdString().c_str())
+//                    .WithTargetLanguageCode(toLang.toStdString().c_str());
+//            request.SetText(text1.toStdString().c_str());
+//            auto outcome = client.TranslateText(request);
+//            if (outcome.IsSuccess()) {
+//                auto outtext = outcome.GetResult().GetTranslatedText();
+//                emit resultReady(outtext.c_str());
+//            } else {
+//            }
+//        }
 
-        Aws::ShutdownAPI(options);
+//        Aws::ShutdownAPI(options);
+        emit resultReady(text1);
     } else {
         emit resultReady(text1);
     }

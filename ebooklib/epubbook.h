@@ -1,5 +1,6 @@
 #ifndef EPUBBOOK_H
 #define EPUBBOOK_H
+#include <QStandardPaths>
 #include <QTextBlock>
 #include <QTextDocument>
 #include <QTextDocumentFragment>
@@ -19,6 +20,7 @@
 #include <QtXml/QDomDocument>
 
 #include "ebooklib/ibook.h"
+#include "quazip/JlCompress.h"
 #include "quazip/quazip.h"
 #include "quazip/quazipfile.h"
 
@@ -38,7 +40,7 @@ class EpubBook : public IBook {
 
         // 打开书籍
         Q_INVOKABLE int parseBook(const QString &epudfile = "") override;
-        Q_INVOKABLE int parseBook(QIODevice *ioDevice) override;
+
         Q_INVOKABLE QVariantMap openChapter(const QString &url) override;
         Q_INVOKABLE QByteArray openFileByUrl(const QString &index) override;
         Q_INVOKABLE QString getFirstPageUrl() override;
@@ -81,7 +83,11 @@ class EpubBook : public IBook {
         int parseEpub();
         QuaZip *m_epub = nullptr;
         QString contentOpfFile;
-        QString tocFile;
+        QDir userDir =
+            QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation))
+                .absoluteFilePath(".cache/nadoview");
+        QString tocName;
+
         QDir tocBase;
         QString tocXhtml = "";
         QString version;  // epub 版本号

@@ -1,5 +1,5 @@
 import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick.Controls
 //import QtNetwork
 import com.tap2happy.nadoview 1.0
 //import QtQuick.Effects
@@ -7,8 +7,8 @@ import Qt5Compat.GraphicalEffects
 import QtQuick.Layouts
 import Qt.labs.platform
 
+
 import QtWebView 1.1
-//import QtWebEngine 1.10
 import QtWebChannel 1.5
 
 Window {
@@ -23,6 +23,7 @@ Window {
     property  string bookUrl: ""
     property  int  pageIndex: 0;
     property int onstartScrollTo: 0
+    property int pos_y:0
     visible: true
 	
     width: 1060
@@ -33,23 +34,23 @@ Window {
     TableOfContent {
         id:tableOfContent
         onSelectedText: function(text){
-            transfer_box_text.text="loading...";
-            transferBox.open();
-            myTransfer.transferText(text);
+            transfer_box_text.text=text;
+//            transferBox.open();
+//            myTransfer.transferText(text);
         }
     }
-    AwsTransfer {
-        id:myTransfer
-        onResultReady: function(out){
-			//            console.log("transfer out:",out);
-			// if(out.length<=4 || out.split(" ").length ==1){
-			// 	
-            // 	transfer_box_text.text = "<a href='eudic://dict/"+out+"'>" +out+"</a>";
-			// 	return;
-			// }
-            transfer_box_text.text = out;
-        }
-    }
+//    AwsTransfer {
+//        id:myTransfer
+//        onResultReady: function(out){
+//			//            console.log("transfer out:",out);
+//			// if(out.length<=4 || out.split(" ").length ==1){
+//			//
+//            // 	transfer_box_text.text = "<a href='eudic://dict/"+out+"'>" +out+"</a>";
+//			// 	return;
+//			// }
+//            transfer_box_text.text = out;
+//        }
+//    }
 
 
     FontLoader{
@@ -90,6 +91,7 @@ Window {
 
 //        pageView.text = tableOfContent.openPage(url);
         pageView.url = tableOfContent.hosts()+ url;
+        console.log(pageView.url);
 		if(read.last_read_scroll_number) onstartScrollTo = read.last_read_scroll_number;
 		book_lists.close();
 //        flick.contentY = onstartScrollTo;
@@ -108,6 +110,7 @@ Window {
     //没有打开的文件时
     function noOpenFile(){
         var books = userdata.books(1);
+        console.log(JSON.stringify(books));
         tableOfContent.openBook(books[0].book_url);
     }
     Component.onCompleted: function(){
@@ -126,8 +129,9 @@ Window {
     	    //focus: true
     	    //closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 			width:300
+            y:pos_y
 			color:"#fffffe"
-    	    height:root.height
+            height:root.height-pos_y
 //  	      Rectangle {
 //  	          anchors.fill: parent
 //  	          color: "#fffffe"
@@ -186,6 +190,7 @@ Window {
 
     	                        tocListView.currentIndex = index;
     	                        pageView.url = tableOfContent.hosts()+chapterUrl;
+                                console.log(pageView.url);
     	                    }
     	                }
     	            }
@@ -207,49 +212,25 @@ Window {
     	    color:"#fffffe"
 			width:parent.width-leftBox.width
 			x:leftBox.width
-    	    height:parent.height
-    	    WebView {
+            y:pos_y
+            height:parent.height-pos_y
+            WebView {
     	        id:pageView
 //  	                  width: flick.width-20
 //  	                  x:10
     	        width: parent.width
     	        height: parent.height -webview_btns.height
     	        onLoadingChanged:function(event){
-    	            if(event.status!=2){
+                    if(event.status!==2){
     	                return;
     	            }
-    	            pageView.runJavaScript(` var transfer_url = "`+tableOfContent.hosts()+`/transfer";
-    	                                   `);
+                    pageView.runJavaScript(tableOfContent.readfile(":/res/jquery.js"),function(result){
+                        console.log(result);
+                    });
+                    pageView.runJavaScript(tableOfContent.readfile(":/res/jquery-ui.min.js"));
+                    pageView.runJavaScript(tableOfContent.readfile(":/res/rloader1.5.4_fin.js"));
+                    pageView.runJavaScript(tableOfContent.readfile(":/res/book.js"));
 
-    	            pageView.runJavaScript("document.body.style.margin='20px';");
-    	            pageView.runJavaScript("document.body.style.fontSize='18px';");
-//  	              pageView.runJavaScript("document.body.style.textIndent='2em';");
-//  	              pageView.runJavaScript("document.body.style.scrollX='hidden';");
-    	            pageView.runJavaScript("document.body.style.overflowX='hidden';");
-//  	              pageView.runJavaScript("document.body.style.overflowY='hidden';");
-    	            pageView.runJavaScript(`
-    	                                   var images = document.querySelectorAll('img');
-    	                                   Array.prototype.forEach.call(images, function(image) {
-    	                                     image.style.maxWidth = '90%';
-    	                                   });
-    	                                   `);
-    	            pageView.runJavaScript(`
-    	                                   var ps = document.querySelectorAll('p');
-    	                                   Array.prototype.forEach.call(ps, function(p) {
-    	                                     p.style.textIndent = '2em';
-    	                                   });
-    	                                   `);
-
-    	            pageView.runJavaScript(`document.addEventListener('mouseup', function() {
-    	                                   var selection = window.getSelection().toString();
-    	                                   if (selection !== '') {
-    	                                   var xhr = new XMLHttpRequest();
-    	                                   xhr.open('POST', transfer_url);
-    	                                   xhr.send(selection);
-    	                                   }
-    	                                 });`,function(result){
-    	                    console.log(result);
-    	            });
     	            console.log("find index id",tableOfContent.urlToIndex(url));
     	            console.log(root.bookName, tableOfContent.readIndex(),tableOfContent.getIndexOfTable());
 					userdata.read(root.bookUrl,root.bookName,tableOfContent.readIndex(),0);
@@ -429,7 +410,8 @@ Window {
         focus:true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         width:parent.width
-        height:parent.height - webview_btns.height
+        height:parent.height - webview_btns.height-pos_y
+        y:pos_y
 
         // 设置界面的主要内容
         Item {
@@ -786,7 +768,8 @@ Window {
 	Popup{
 		id:book_lists
 		width:root.width
-		height:root.height
+        height:root.height-pos_y
+        y:pos_y
 
         modal: true
         focus: true
