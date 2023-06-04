@@ -145,7 +145,7 @@ Q_INVOKABLE void TableOfContent::openBook(const QString &bookUri) {
         emit layoutChanged();
         QVariantMap info = {
             {"book_name", mBook->title},
-            {"bookPath", bookUri},
+            {"bookPath", mBook->bookPath},
             {"auther", mBook->getCreators().join(",")},
             {"lang", mBook->getLanguage()},
             {"coverImg", mBook->coverImg},
