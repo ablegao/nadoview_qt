@@ -207,6 +207,7 @@ Window {
     	                        tocListView.currentIndex = index;
 //                                pageView.url = tableOfContent.hosts()+chapterUrl;
                                 pageView.runJavaScript(`rendition.display("`+chapterUrl+`");`);
+                                userdata.read(root.bookUrl,root.bookName,index,0);
 //                                console.log(pageView.url);
 
     	                    }
@@ -336,7 +337,8 @@ Window {
     	                         // 上一页
 //    	                       var u = tableOfContent.prevPage();
                                 pageView.runJavaScript("rendition.prev();rendition.currentLocation()",function(obj){
-                                      tocListView.currentIndex = obj["start"]['index'];
+                                    tocListView.currentIndex = obj["start"]['index'];
+                                    userdata.read(root.bookUrl,root.bookName,tocListView.currentIndex,0);
                                 });
 //    	                        if(u!=="") pageView.url =tableOfContent.hosts()+u;
     	                    }
@@ -358,7 +360,8 @@ Window {
 
     	                       // 下一页
                                 pageView.runJavaScript("rendition.next();rendition.currentLocation()",function(obj){
-                                      tocListView.currentIndex = obj["start"]['index'];
+                                    tocListView.currentIndex = obj["start"]['index'];
+                                    userdata.read(root.bookUrl,root.bookName,tocListView.currentIndex,0);
                                 });
 
     	                    }
