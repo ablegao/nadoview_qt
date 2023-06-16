@@ -1,0 +1,24 @@
+<html>
+<head>
+    <meta content='width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0' name='viewport' />
+    <script src="qrc:///res/epub.js"></script>
+    <script>
+        var book = ePub();
+        var rendition = book.renderTo("area", { method: "default",flow: "paginated", width: "100%", height: "100%" });
+
+    </script>
+    <style>
+    body{
+       overflow:hidden;
+    }
+    img {
+        display:inline;
+        max-width:90%;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="area"></div>
+</body>
+</html>

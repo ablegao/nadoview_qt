@@ -36,16 +36,16 @@ if (div == undefined) {
     div.id = "dialog";
     document.getElementsByTagName('head')[0].appendChild(div);
 }
-//div.style.display = "none";
-document.addEventListener('mouseup', function (event) {
-    var selection = window.getSelection().toString();
-    if (selection !== '') {
+////div.style.display = "none";
+//document.addEventListener('mouseup', function (event) {
+//    var selection = window.getSelection().toString();
+//    if (selection !== '') {
 
-//        $("body").html(selection);
-        $("#dialog").html(selection);
-         $("#dialog").dialog();
+////        $("body").html(selection);
+//        $("#dialog").html(selection);
+//         $("#dialog").dialog();
 
-        // showFloatingBox(100, event.y, selection);
-    }
-});
+//        // showFloatingBox(100, event.y, selection);
+//    }
+//});
 

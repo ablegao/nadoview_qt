@@ -22,8 +22,11 @@ Window {
     property  string bookName: ""
     property  string bookUrl: ""
     property  int  pageIndex: 0;
+    property string opf:"";
+    property string uuid: "";
     property int onstartScrollTo: 0
     property int pos_y:0
+    property  bool loaded:false;
     visible: true
 	
     width: 1060
@@ -67,7 +70,7 @@ Window {
         root.lang = obj.lang;
 //        var source = "image://mybook/"++"?180x240";
 //        console.log("image......",obj.firstPageUrl,source);
-        bookIcon.source = tableOfContent.hosts()+obj.coverImg;
+
         runingChatModel.addMessage("Use the content in \""+obj.book_name+"\" to answer my question.","system");
 //        if(tableOfContent.useMarkDown()){
 //            pageView.textFormat = Text.MarkdownText;
@@ -76,26 +79,38 @@ Window {
         tocListView.currentIndex = 0;
         var read = userdata.openBook(obj.bookPath,obj.book_name,obj.auther,obj.lang);
 		root.bookUrl = obj.bookPath;
+        root.opf = obj.opf;
+        root.uuid = obj.uuid;
+        bookIcon.source ="file://"+obj.bookPath+"/"+obj.uuid+".jpg" ;
 //        if(read.last_read_file!=="") pageView.url = "mybook://book.local"+tableOfContent.indexToUrl(read.last_read_index);
 //        else pageView.url = "mybook://book.local"+obj.firstPageUrl;
-        var url  = obj.firstPageUrl;
-        if(read.last_read_file!=="")  url = tableOfContent.indexToUrl(read.last_read_index);
+//        var url  = obj.firstPageUrl;
+        root.pageIndex = read.last_read_index;
+        pageView.url="qrc:///res/index.html";
 
-        var directoryPath = '';
-        var pathArray = url.split('/');
-        for (var i = 0; i < pathArray.length - 1; i++) {
-          directoryPath += pathArray[i] + '/';
-        }
+//        if(read.last_read_file!=="")  url = tableOfContent.indexToUrl(read.last_read_index);
+//        console.log(url);
+//        pageView.runJavaScript(`rendition.display("`+url+`");`);
+//        var directoryPath = '';
+//        var pathArray = url.split('/');
+//        for (var i = 0; i < pathArray.length - 1; i++) {
+//          directoryPath += pathArray[i] + '/';
+//        }
 //        pageView.baseUrl = "image://mybook"+directoryPath;
 
 
 //        pageView.text = tableOfContent.openPage(url);
-        pageView.url = tableOfContent.hosts()+ url;
-        console.log(pageView.url);
+//        pageView.url = tableOfContent.hosts()+ "";
+//        console.log(pageView.url);
 		if(read.last_read_scroll_number) onstartScrollTo = read.last_read_scroll_number;
+//        if(root.loaded){
+//            root.open_book();
+//        }
 		book_lists.close();
 //        flick.contentY = onstartScrollTo;
     }
+
+
 
     property var pageRows:[];
     function bookChapterReaded(obj,index){
@@ -121,6 +136,7 @@ Window {
         tableOfContent.onOpenPageFinishd.connect(bookChapterReaded);
         appSingle.onFileOpend.connect(onFileOpen);
         appSingle.onNoOpenFile.connect(noOpenFile);
+        console.log("loaded...");
 
 	}
 		Rectangle{
@@ -189,8 +205,10 @@ Window {
     	                    onClicked: function(){
 
     	                        tocListView.currentIndex = index;
-    	                        pageView.url = tableOfContent.hosts()+chapterUrl;
-                                console.log(pageView.url);
+//                                pageView.url = tableOfContent.hosts()+chapterUrl;
+                                pageView.runJavaScript(`rendition.display("`+chapterUrl+`");`);
+//                                console.log(pageView.url);
+
     	                    }
     	                }
     	            }
@@ -218,23 +236,21 @@ Window {
     	        id:pageView
 //  	                  width: flick.width-20
 //  	                  x:10
+//                url:"qrc:///res/index.html"
     	        width: parent.width
     	        height: parent.height -webview_btns.height
     	        onLoadingChanged:function(event){
                     if(event.status!==2){
-    	                return;
-    	            }
-                    pageView.runJavaScript(tableOfContent.readfile(":/res/jquery.js"),function(result){
-                        console.log(result);
-                    });
-                    pageView.runJavaScript(tableOfContent.readfile(":/res/jquery-ui.min.js"));
-                    pageView.runJavaScript(tableOfContent.readfile(":/res/rloader1.5.4_fin.js"));
-                    pageView.runJavaScript(tableOfContent.readfile(":/res/book.js"));
+                        return;
+                    }
+//                    console.log(pageView.url+" opened...");
+//                    root.open_book();
+                    pageView.runJavaScript("book.open('"+tableOfContent.hosts()+"/"+root.uuid+"/"+root.opf+"');",function(result){
 
-    	            console.log("find index id",tableOfContent.urlToIndex(url));
-    	            console.log(root.bookName, tableOfContent.readIndex(),tableOfContent.getIndexOfTable());
-					userdata.read(root.bookUrl,root.bookName,tableOfContent.readIndex(),0);
-					tocListView.currentIndex = tableOfContent.getIndexOfTable();
+                    });
+                    var url = tableOfContent.indexToUrl(root.pageIndex);
+
+                    pageView.runJavaScript(`rendition.display("`+url+`");`);
     	        }
 
     	    }
@@ -318,8 +334,11 @@ Window {
     	                    anchors.fill: parent
     	                    onClicked: function(){
     	                         // 上一页
-    	                       var u = tableOfContent.prevPage();
-    	                        if(u!=="") pageView.url =tableOfContent.hosts()+u;
+//    	                       var u = tableOfContent.prevPage();
+                                pageView.runJavaScript("rendition.prev();rendition.currentLocation()",function(obj){
+                                      tocListView.currentIndex = obj["start"]['index'];
+                                });
+//    	                        if(u!=="") pageView.url =tableOfContent.hosts()+u;
     	                    }
     	                }
     	            }
@@ -338,10 +357,10 @@ Window {
     	                    onClicked:function() {
 
     	                       // 下一页
-    	                        var u= tableOfContent.nextPage();
-    	                        if(u!=="")
-    	                        pageView.url =tableOfContent.hosts()+u;
-//  	                          root.onstartScrollTo = 0;
+                                pageView.runJavaScript("rendition.next();rendition.currentLocation()",function(obj){
+                                      tocListView.currentIndex = obj["start"]['index'];
+                                });
+
     	                    }
     	                }
     	            }

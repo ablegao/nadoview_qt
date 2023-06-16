@@ -5,6 +5,7 @@
 #include "QtCore/qjsonarray.h"
 #include "QtCore/qjsonobject.h"
 #include "QtCore/qtmetamacros.h"
+#include "ebooklib/epubbook.h"
 
 // // 这个写法，是为了初始化变量mData , C++ 可以在构造函数定义中初始化变量
 // 不是在构造函数function 内部
@@ -27,11 +28,23 @@ TableOfContent::TableOfContent(QObject *parent) : QAbstractListModel(parent) {
                       [this](const QHttpServerRequest &request) {
                           return transferRequest(request);
                       }));
-    server->route("/(.*)",
-                  std::function<QByteArray(const QHttpServerRequest &)>(
-                      [this](const QHttpServerRequest &request) {
-                          return handleRequest(request);
-                      }));
+    //    server->route("/(.*)",
+    //                  std::function<QByteArray(const QHttpServerRequest &)>(
+    //                      [this](const QHttpServerRequest &request) {
+    //                          return handleRequest(request);
+    //                      }));
+    server->route("/(.*)", [](const QHttpServerRequest &req) {
+        QDir userDir = QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation))
+                           .absoluteFilePath(".cache/nadoview");
+        QString URI = req.url().path().mid(1);
+//        qDebug() << "==========1111 " << userDir.absoluteFilePath(URI);
+        //            QHttpServerResponse resp("");
+            QHttpServerResponse resp = QHttpServerResponse::fromFile(userDir.absoluteFilePath(URI));
+            resp.setHeader("Content-Type", "application/x-empty");
+            resp.setHeader("Server", "test server");
+            resp.setHeader("Access-Control-Allow-Origin", "*");
+            return resp;
+        });
 
     qDebug() << "Server :" << hosts();
 }
@@ -141,17 +154,18 @@ Q_INVOKABLE void TableOfContent::openBook(const QString &bookUri) {
     mBook = new EpubBook();
     int status = mBook->parseBook(bookUri);
     if (status == 0) {
-        qDebug() << "file open finished";
+        qDebug() << "file open finished" << mBook->contentOpfFile << "---------";
         emit layoutChanged();
         QVariantMap info = {
             {"book_name", mBook->title},
+            {"uuid", mBook->uuid},
             {"bookPath", mBook->bookPath},
             {"auther", mBook->getCreators().join(",")},
             {"lang", mBook->getLanguage()},
-            {"coverImg", mBook->coverImg},
+            {"coverImg", mBook->uuid + ".jpg"},
             {"firstPageUrl", mBook->getFirstPageUrl()},
             {"lang", mBook->language},
-            {"coverImg", mBook->coverImg},
+            {"opf",QDir(mBook->bookPath).relativeFilePath(mBook->contentOpfFile)},
             {"firstPageUrl", mBook->getFirstPageUrl()},
         };
         emit bookOpenFinishd(info);

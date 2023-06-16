@@ -7,11 +7,14 @@
         <file>mainwin.qml</file>
         <file>settings.qml</file>
         <file>res/book.js</file>
-        <file>res/jquery-ui.min.js</file>
+        <file>res/epub.js</file>
+        <file>res/epub.js.map</file>
+        <file>res/rloader1.5.4_fin.js</file>
+        <file>res/jquery.js</file>
         <file>res/jquery-ui.min.css</file>
+        <file>res/jquery-ui.min.js</file>
         <file>res/jquery-ui.structure.min.css</file>
         <file>res/jquery-ui.theme.min.css</file>
-        <file>res/jquery.js</file>
-        <file>res/rloader1.5.4_fin.js</file>
+        <file>res/index.html</file>
     </qresource>
 </RCC>

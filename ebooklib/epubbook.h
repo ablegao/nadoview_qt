@@ -82,7 +82,7 @@ class EpubBook : public IBook {
         // 解析整个epub文件
         int parseEpub();
         QuaZip *m_epub = nullptr;
-        QString contentOpfFile;
+
         QDir userDir =
             QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation))
                 .absoluteFilePath(".cache/nadoview");

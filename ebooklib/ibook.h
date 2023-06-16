@@ -19,6 +19,7 @@ class IBook : public QObject {
         QString description;
         QString bookPath;
         QString uuid;
+        QString contentOpfFile;
         QVariantList tableOfContent;
         //  QJsonArray bookMenus;
 

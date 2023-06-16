@@ -35,7 +35,7 @@ int EpubBook::parseBook(const QString &epubfile) {
         doc.setContent(data);
         QDomElement docElem = doc.documentElement();
         QDomNodeList root = docElem.elementsByTagName("rootfile");
-        QString contentOpfFile;
+
         if (root.size() > 0) {
             contentOpfFile = root.at(0).toElement().attribute("full-path");
         }
@@ -70,8 +70,6 @@ int EpubBook::parseBook(const QString &epubfile) {
 
         m_epub->close();
     }
-
-    qDebug() << "title ===================" << title << uuid << bookPath;
     return parseEpub();
 }
 
@@ -121,14 +119,16 @@ int EpubBook::parseEpub() {
     // 读取 content.opb
     //    QuaZipFile openxml(m_epub);
     // 需要换成文件读取
-    tocBase = QFileInfo(bookPath + "/" + contentOpfFile).dir();
-    QFile file(bookPath + "/" + contentOpfFile);
+    contentOpfFile = bookPath + "/" + contentOpfFile;
+    tocBase = QFileInfo(contentOpfFile).dir();
+    QFile file(contentOpfFile);
     if (file.open(QIODevice::ReadOnly)) {
         doc.setContent(file.readAll());
     } else {
-        qDebug() << "not open error" << bookPath + "/" + contentOpfFile;
+        qDebug() << "not open error" << contentOpfFile;
         return -3;
     }
+    qDebug() << "OPF" << contentOpfFile;
     QDomElement docElem = doc.documentElement();
 
     version = docElem.toElement().attribute("version");
@@ -275,7 +275,9 @@ void EpubBook::parseNavXHtml() {
         QString href = navPoint.attribute("href");
         QVariantMap entry;
         entry["chapterName"] = label;
-        entry["chapterUrl"] = QDir::cleanPath(tocBase.filePath(href));
+        entry["chapterUrl"] = href;
+
+        qDebug()  << "DEBUGl;;;" << entry["chapterUrl"];
         entry["chapterLevel"] = 0;
         tableOfContent.append(entry);
     }
@@ -313,7 +315,7 @@ void EpubBook::parseTocNcx() {
         //        qDebug() << " URL TESET" << tocBase.filePath(href);
         QVariantMap entry;
         entry["chapterName"] = label;
-        entry["chapterUrl"] = QDir::cleanPath(tocBase.filePath(href));
+        entry["chapterUrl"] = href ;//QDir(bookPath).relativeFilePath(QDir::cleanPath(tocBase.filePath(href)));
         entry["chapterLevel"] = 0;
         tableOfContent.append(entry);
     }
@@ -409,7 +411,7 @@ QString EpubBook::getCurrentPageUrl() {
         if (item["idref"].toString() ==
             m_Manifest.at(i).toVariantMap()["id"].toString()) {
             QString href = m_Manifest.at(i).toVariantMap()["href"].toString();
-            return QDir::cleanPath(tocBase.filePath(href));
+            return href;
         }
     }
     return "";
